@@ -121,6 +121,19 @@ public class Proceso {
     public String toString() {
         return String.format("Process[%s: %s, PC=%d, State=%s]", id, name, PC, ProcessState);
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Proceso other = (Proceso) obj;
+        return this.id == other.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(id);
+    }
 }
     
     

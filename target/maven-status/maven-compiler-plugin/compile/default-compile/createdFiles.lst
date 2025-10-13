@@ -1,1 +1,13 @@
-com\mycompany\proyectoso1\ProyectoSO1.class
+Simulacion\Clock.class
+Simulacion\Planificador.class
+model\ProyectoSO1.class
+Edd\Cola.class
+model\Status.class
+Simulacion\ProcessManager.class
+Simulacion\Simulador.class
+model\Proceso.class
+Planificacion\FCFS.class
+Ejecucion\Prueba.class
+Simulacion\CPU.class
+utils\Logger.class
+utils\Semaforo.class
