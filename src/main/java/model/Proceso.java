@@ -20,6 +20,7 @@ public class Proceso {
     private int ciclosParaExcepcion; //Ciclos para generar excepcion
     private int ciclosPendientes; //ciclos para satisfacer excepcion
     private int ciclos_ejecutados; 
+    private int ciclosDesdeUltimaExcepcion;
     private static int nextId = 1;  // Generador de IDs únicos
 
     /*Lo que coloca el user**/
@@ -35,6 +36,7 @@ public class Proceso {
         this.ciclosParaExcepcion = ciclosParaExcepcion;
         this.ciclosPendientes = ciclosPendientes;
         this.ciclos_ejecutados =0;
+        this.ciclosDesdeUltimaExcepcion = 0;
     }
 
     public Proceso(Status ProcessState, int PC, int mar) {
@@ -90,33 +92,53 @@ public class Proceso {
     public int getCiclos_ejecutados() {
         return ciclos_ejecutados;
     }
+    
+    public void setCiclosPendientes(int ciclosPendientes) {
+        this.ciclosPendientes = ciclosPendientes;
+    }
 
-   public void increment_Cycles() {  
+    public void increment_Cycles() {  
     this.ciclos_ejecutados++;
-}
+    this.ciclosDesdeUltimaExcepcion++;
+    }
 
-   //Verificar si el proceso termino
+    //Verificar si el proceso termino
    
-   public boolean End(){
+    public boolean End(){
        return PC >= Total_Instructions ; 
-   }
+    }
    
-   //verificar si se debe generar excepcion para i/o bound
-   public boolean generate_EXC(){
-       return !isCPUbound && (ciclos_ejecutados % ciclosParaExcepcion == 0) && (ciclos_ejecutados > 0);
-   }
+    //verificar si se debe generar excepcion para i/o bound
+    public boolean generate_EXC(){
+       if (isCPUbound || ciclosParaExcepcion == 0) {
+           return false; //CPU bound no genera excepciones I/O
+       }
+       
+       boolean debeGenerar = !isCPUbound && (ciclosDesdeUltimaExcepcion >= ciclosParaExcepcion) && (ciclos_ejecutados > 0);
+       if (debeGenerar) {
+           ciclosDesdeUltimaExcepcion = 0; //Reiniciar contador
+       }
+       return debeGenerar;
+    }
    
-// Ejecutar una instrucción
-    public void executeInstruction() {
+    public void resetAfterIO() {
+        this.ciclosPendientes = 0;
+        this.ciclosDesdeUltimaExcepcion = 0;
+    }
+   
+    // Ejecutar una instrucción
+    public boolean executeInstruction() {
         if (!End()) {
             PC++;    //Por simplicidad, todos los procesos se ejecutan de manera lineal. 
                            //Eso quiere decir que el PC y el MAR incrementarán una unidad por cada ciclo del reloj
             mar++;
             ciclos_ejecutados++;
+            ciclosDesdeUltimaExcepcion++;
+            return true;
         }
-        
-        
+        return false;
     }
+    
     @Override
     public String toString() {
         return String.format("Process[%s: %s, PC=%d, State=%s]", id, name, PC, ProcessState);

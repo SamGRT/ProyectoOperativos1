@@ -12,10 +12,12 @@ public class Clock {
     private static Clock instance; // Patrón Singleton - única instancia
     private int currentCycle;
     private int CycleDuration; //milisegundos
+    private boolean running;
 
     public Clock() {
         this.currentCycle = 0;
-        this.CycleDuration = 1000;  // 1 sec por defecto
+        this.CycleDuration = 500;  // 1 sec por defecto
+        this.running = false;
     }
     
     // Patrón Singleton - asegura una sola instancia del reloj
@@ -35,6 +37,14 @@ public class Clock {
         }
     }
     
+    public int getCurrentCycle() {
+        return currentCycle;
+    }
+    
+    public void incrementCycle() {
+        currentCycle++;
+    }
+    
     public void reset() {
         this.currentCycle = 0;
     }
@@ -47,9 +57,15 @@ public class Clock {
         this.CycleDuration = CycleDuration;
     }
 
-    public long getCurrentCycle() {
-        return currentCycle;
+    public void start() {
+        this.running = true;
     }
     
+    public void  stop() {
+        this.running = false;
+    }
     
+    public boolean isRunning() {
+        return running;
+    }
 }

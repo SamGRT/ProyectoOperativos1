@@ -3,7 +3,7 @@
  */
 
 package model;
-import Testing.PruebaPlanificacion;
+import Testing.PruebaDepuracionIO;
 
 /**
  *
@@ -12,6 +12,6 @@ import Testing.PruebaPlanificacion;
 public class ProyectoSO1 {
 
     public static void main(String[] args) {
-        PruebaPlanificacion.main(args);
+        PruebaDepuracionIO.main(args);
     }
 }

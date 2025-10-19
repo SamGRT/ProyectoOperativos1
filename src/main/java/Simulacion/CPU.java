@@ -16,12 +16,14 @@ public class CPU implements Runnable {
     private Semaforo semaforoCPU;
     private Logger logger;
     private int ciclosReloj;
+    private ExceptionHandler manejadorExcepciones;
     
     public CPU() {
         this.ejecutando = false;
         this.semaforoCPU = new Semaforo(1);
         this.logger = Logger.getInstancia();
         this.ciclosReloj = 0;
+        this.manejadorExcepciones = new ExceptionHandler();
     }
     
     public void iniciar() {
@@ -29,16 +31,18 @@ public class CPU implements Runnable {
             ejecutando = true;
             hiloCPU = new Thread(this, "Hilo-CPU");
             hiloCPU.start();
-            logger.log("CPU iniciada");
+            manejadorExcepciones.iniciar();
+            logger.log("CPU y manejador de excepciones iniciados");
         }
     }
     
     public void detener() {
         ejecutando = false;
+        manejadorExcepciones.detener();
         if (hiloCPU != null) {
             hiloCPU.interrupt();
         }
-        logger.log("CPU detenida");
+        logger.log("CPU y manejador de excepciones detenidos");
     }
     
     public void ejecutarProceso(Proceso proceso) {
@@ -57,26 +61,41 @@ public class CPU implements Runnable {
     
     @Override
     public void run() {
+        Clock.getInstance().start(); // Iniciar el reloj
         while (ejecutando && !Thread.currentThread().isInterrupted()) {
             try {
                 semaforoCPU.adquirir();
-                
+
+                // INCREMENTAR CICLO GLOBAL
+                Clock.getInstance().incrementCycle();
+
                 if (procesoActual != null) {
-                    procesoActual.executeInstruction();
+                    boolean instruccionEjecutada = procesoActual.executeInstruction();
                     ciclosReloj++;
-                    
-                    logger.log(String.format("Proceso %s - PC: %d/%d - MAR: %d",
-                            procesoActual.getName(),
-                            procesoActual.getPC(),
-                            procesoActual.getTotal_Instructions(),
-                            procesoActual.getMar()));
-                    
-                    if (procesoActual.End()) {
+
+                    if (instruccionEjecutada) {
+                        logger.log(String.format("Proceso %s - PC: %d/%d - MAR: %d",
+                                procesoActual.getName(),
+                                procesoActual.getPC(),
+                                procesoActual.getTotal_Instructions(),
+                                procesoActual.getMar()));
+
+                        // VERIFICAR EXCEPCIÓN I/O
+                        if (procesoActual.generate_EXC()) {
+                            logger.log(String.format("¡EXCEPCIÓN I/O! Proceso %s solicita E/S", 
+                                procesoActual.getName()));
+                            manejadorExcepciones.manejarExcepcionIO(procesoActual);
+                            procesoActual = null; // Liberar CPU
+                        }
+                    }
+
+                    if (procesoActual != null && procesoActual.End()) {
                         procesoActual.setProcessState(Status.Finished);
                         logger.log(String.format("Proceso %s TERMINADO", procesoActual.getName()));
+                        procesoActual = null;
                     }
                 }
-                
+
                 semaforoCPU.liberar();
                 Thread.sleep(Clock.getInstance().getCycleDuration());
             } catch (InterruptedException e) {
@@ -84,6 +103,11 @@ public class CPU implements Runnable {
                 break;
             }
         }
+        Clock.getInstance().stop(); // Detener el reloj
+    }
+    
+    public ExceptionHandler getManejadorExcepciones() {
+        return manejadorExcepciones;
     }
     
     public Proceso getProcesoActual() {

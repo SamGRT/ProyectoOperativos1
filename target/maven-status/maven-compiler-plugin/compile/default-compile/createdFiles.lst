@@ -7,6 +7,7 @@ Edd\Cola.class
 model\Status.class
 Testing\PruebaPlanificacion.class
 Simulacion\ProcessManager.class
+Testing\PruebaDepuracionIO.class
 Planificacion\Garantizado.class
 Planificacion\MultiplesColas.class
 Simulacion\Simulador.class
@@ -15,5 +16,8 @@ Planificacion\FCFS.class
 Planificacion\SJF.class
 Planificacion\Prioridades.class
 Simulacion\CPU.class
+Simulacion\ExceptionHandler.class
 utils\Logger.class
+Testing\PruebaCorreccionesIO.class
+Testing\PruebaExcepcionesIO.class
 utils\Semaforo.class

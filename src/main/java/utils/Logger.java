@@ -1,5 +1,7 @@
 package utils;
 
+import Simulacion.Clock;
+
 /**
  *
  * @author sarazo
@@ -20,8 +22,8 @@ public class Logger {
     }
     
     public void log(String mensaje) {
-        String entradaLog = String.format("[Ciclo %d] %s%n",
-                Simulacion.Clock.getInstance().getCurrentCycle(), mensaje);
+        int cicloActual = Clock.getInstance().getCurrentCycle();
+        String entradaLog = String.format("[Ciclo %d] %s%n", cicloActual, mensaje);
         log.append(entradaLog);
         System.out.print(entradaLog);
     }
