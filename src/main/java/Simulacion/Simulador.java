@@ -1,6 +1,7 @@
 package Simulacion;
 
 import model.Proceso;
+import Planificacion.*;
 /**
  *
  * @author sarazo
@@ -46,11 +47,35 @@ public class Simulador {
         planificador.agregarProceso(proceso3);
     }
     
+    public void cambiarAFCFS() {
+        planificador.cambiarAlgoritmo(new FCFS());
+    }
+    
+    public void cambiarASJF() {
+        planificador.cambiarAlgoritmo(new SJF());
+    }
+    
+    public void cambiarARoundRobin() {
+        planificador.cambiarAlgoritmo(new RoundRobin());
+    }
+    
+    public void cambiarAPrioridades() {
+        planificador.cambiarAlgoritmo(new Prioridades());
+    }
+    
+    public void cambiarAMultiplesColas() {
+        planificador.cambiarAlgoritmo(new MultiplesColas());
+    }
+    
+    public void cambiarAGarantizado() {
+        planificador.cambiarAlgoritmo(new Garantizado());
+    }
+    
     public CPU getCPU() {
         return cpu;
     }
     
-    public Planificador getPLanificador() {
+    public Planificador getPlanificador() {
         return planificador;
     }
     

@@ -16,9 +16,9 @@ public class Cola {
     private int capacity;
 
     public Cola() {
+        this.capacity =10;
         this.procesos = new Proceso[capacity];
         this.size = 0;
-        this.capacity =10;
     }
     
     public void encolar(Proceso proceso){

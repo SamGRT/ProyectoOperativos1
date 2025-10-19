@@ -10,16 +10,20 @@ import utils.Semaforo;
  *
  * @author sarazo
  */
-public class FCFS implements AlgoritmoPlanificacion {
+public class Garantizado implements AlgoritmoPlanificacion {
     private Cola colaListos;
     private Proceso procesoActual;
     private Semaforo semaforoCola;
     private Logger logger;
+    private int totalProcesos;
+    private int ciclosTotales;
     
-    public FCFS() {
+    public Garantizado() {
         this.colaListos = new Cola();
         this.semaforoCola = new Semaforo(1);
         this.logger = Logger.getInstancia();
+        this.totalProcesos = 0;
+        this.ciclosTotales = 0;
     }
     
     @Override
@@ -28,11 +32,12 @@ public class FCFS implements AlgoritmoPlanificacion {
             semaforoCola.adquirir();
             proceso.setProcessState(Status.Ready);
             colaListos.encolar(proceso);
-            logger.log(String.format("Proceso %s agregado a cola FCFS", proceso.getName()));
+            totalProcesos++;
+            logger.log(String.format("Proceso %s agregado a cola Garantizado", proceso.getName()));
             semaforoCola.liberar();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.log("Error al agregar proceso: " + e.getMessage());
+            logger.log("Error Garantizado al agregar proceso: " + e.getMessage());
         }
     }
     
@@ -42,28 +47,33 @@ public class FCFS implements AlgoritmoPlanificacion {
             semaforoCola.adquirir();
             
             if (procesoActual != null && !procesoActual.End()) {
-                semaforoCola.liberar();
-                return procesoActual;
+                // Garantizar tiempo equitativo
+                int tiempoGarantizado = Math.max(1, ciclosTotales / totalProcesos);
+                if (procesoActual.getCiclos_ejecutados() < tiempoGarantizado) {
+                    semaforoCola.liberar();
+                    return procesoActual;
+                }
+            }
+            
+            // Rotar procesos para garantizar equidad
+            if (procesoActual != null && !procesoActual.End()) {
+                procesoActual.setProcessState(Status.Ready);
+                colaListos.encolar(procesoActual);
             }
             
             Proceso siguiente = colaListos.desencolar();
             if (siguiente != null) {
                 siguiente.setProcessState(Status.Running);
-                logger.log(String.format("Planificador FCFS selecciona Proceso %s", siguiente.getName()));
+                ciclosTotales++;
+                logger.log(String.format("Garantizado selecciona Proceso %s (Ciclo %d)", 
+                    siguiente.getName(), ciclosTotales));
             }
             procesoActual = siguiente;
             semaforoCola.liberar();
             return siguiente;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.log("Error al obtener el siguiente proceso: " + e.getMessage());
             return null;
-        }
-    }
-    
-    public void devolverProceso(Proceso proceso) {
-        if (proceso != null && !proceso.End()) {
-            agregarProceso(proceso);
         }
     }
     
@@ -74,14 +84,6 @@ public class FCFS implements AlgoritmoPlanificacion {
     
     @Override
     public String getNombre() {
-        return "FCFS (First Come First Served)";
-    }
-    
-    public Proceso getProcesoActual() {
-        return procesoActual;
-    }
-    
-    public int getTamañoCola() {
-        return colaListos.size();
+        return "Garantizado (Equitativo)";
     }
 }

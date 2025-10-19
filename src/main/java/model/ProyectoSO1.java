@@ -3,6 +3,7 @@
  */
 
 package model;
+import Testing.PruebaPlanificacion;
 
 /**
  *
@@ -11,6 +12,6 @@ package model;
 public class ProyectoSO1 {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        PruebaPlanificacion.main(args);
     }
 }

@@ -1,25 +1,45 @@
+// Simulacion/Planificador.java (ACTUALIZADA)
 package Simulacion;
 
-import Planificacion.FCFS;
+import Planificacion.*;
 import model.Proceso;
 import utils.Logger;
+import utils.Semaforo;
 
 /**
  *
  * @author sarazo
  */
 public class Planificador implements Runnable {
-    private FCFS planificadorFCFS;
+    private AlgoritmoPlanificacion algoritmoActual;
     private CPU cpu;
     private boolean ejecutando;
     private Thread hiloPlanificador;
     private Logger logger;
+    private Semaforo semaforoCambio;
     
     public Planificador(CPU cpu) {
-        this.planificadorFCFS = new FCFS();
+        this.algoritmoActual = new FCFS(); // Por defecto FCFS
         this.cpu = cpu;
         this.ejecutando = false;
         this.logger = Logger.getInstancia();
+        this.semaforoCambio = new Semaforo(1);
+    }
+    
+    public void cambiarAlgoritmo(AlgoritmoPlanificacion nuevoAlgoritmo) {
+        // Mover procesos del algoritmo anterior al nuevo
+        if (algoritmoActual != null) {
+            Edd.Cola colaAnterior = algoritmoActual.getColaListos();
+            for (int i = 0; i < colaAnterior.size(); i++) {
+                Proceso p = colaAnterior.get(i);
+                if (p != null && !p.End()) {
+                    nuevoAlgoritmo.agregarProceso(p);
+                }
+            }
+        }
+        
+        this.algoritmoActual = nuevoAlgoritmo;
+        logger.log("Algoritmo cambiado a: " + nuevoAlgoritmo.getNombre());
     }
     
     public void iniciar() {
@@ -27,7 +47,7 @@ public class Planificador implements Runnable {
             ejecutando = true;
             hiloPlanificador = new Thread(this, "Hilo-Planificador");
             hiloPlanificador.start();
-            logger.log("Planificador iniciado con política FCFS");
+            logger.log("Planificador iniciado con: " + algoritmoActual.getNombre());
         }
     }
     
@@ -43,7 +63,7 @@ public class Planificador implements Runnable {
     public void run() {
         while (ejecutando && !Thread.currentThread().isInterrupted()) {
             try {
-                Proceso siguienteProceso = planificadorFCFS.obtenerSiguienteProceso();
+                Proceso siguienteProceso = algoritmoActual.obtenerSiguienteProceso();
                 if (siguienteProceso != null) {
                     cpu.ejecutarProceso(siguienteProceso);
                 }
@@ -56,11 +76,11 @@ public class Planificador implements Runnable {
     }
     
     public void agregarProceso(Proceso proceso) {
-        planificadorFCFS.agregarProceso(proceso);
+        algoritmoActual.agregarProceso(proceso);
     }
     
-    public FCFS getPlanificadorFCFS() {
-        return planificadorFCFS;
+    public AlgoritmoPlanificacion getAlgoritmoActual() {
+        return algoritmoActual;
     }
     
     public boolean isEjecutando() {
