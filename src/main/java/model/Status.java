@@ -14,7 +14,6 @@ public enum Status {
        Running,
        Blocked,
        Finished,
-       Suspended,
        Ready_Suspended,
        Blocked_Suspended
    }

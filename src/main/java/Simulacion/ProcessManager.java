@@ -16,7 +16,8 @@ public class ProcessManager {
     
     private Cola C_Ready;
     private Cola C_Blocked;
-    private Cola C_Suspended;
+    private Cola C_Suspended_Ready;
+    private Cola C_Suspended_Blocked;
     private Cola C_finished;
     
     private Proceso CurrentRunning_Process;
@@ -25,7 +26,8 @@ public class ProcessManager {
     public ProcessManager() {
         this.C_Ready = new Cola();
         this.C_Blocked = new Cola();
-        this.C_Suspended = new Cola();
+        this.C_Suspended_Ready = new Cola();
+         this.C_Suspended_Blocked= new Cola();
         this.C_finished =new Cola();
         this.CurrentRunning_Process =null;
         this.planificador = null;
@@ -35,7 +37,8 @@ public class ProcessManager {
     public ProcessManager(FCFS planificador) {
         this.C_Ready = new Cola();
         this.C_Blocked = new Cola();
-        this.C_Suspended = new Cola();
+        this.C_Suspended_Ready = new Cola();
+        this.C_Suspended_Blocked = new Cola();
         this.C_finished = new Cola();
         this.CurrentRunning_Process = null;
         this.planificador = planificador;
@@ -99,40 +102,44 @@ public class ProcessManager {
         }
     }
     
-    // suspender (Ready/Blocked --> Suspended)
-    public void SuspendProcess (Proceso proceso){
-        proceso.setProcessState(Status.Suspended);
-        C_Ready.remove(proceso);
-        C_Blocked.remove(proceso);
-        C_Suspended.encolar(proceso);
+ //Ready --> Suspended_Ready (por falta de memoria)
+    public void SuspendReadyProcess(Proceso proceso){
+        if (C_Ready.contiene(proceso)) {
+            proceso.setProcessState(Status.Ready_Suspended);
+            C_Ready.remove(proceso);
+            C_Suspended_Ready.encolar(proceso);
         }
     
-    //Reanudar Proceso suspendido (Suspended --> Ready)
-    public void Reanudar (Proceso proceso){
-        if (C_Suspended.contiene(proceso)) {
+    }
+    // blocked --> Suspended_Blocked
+    public void SuspendBlockedProcess(Proceso proceso){
+        if (C_Blocked.contiene(proceso)) {
+            proceso.setProcessState(Status.Blocked_Suspended);
+            C_Blocked.remove(proceso);
+            C_Suspended_Blocked.encolar(proceso);
+            
+        }
+    }
+    
+    //Suspended_Ready ---> Ready (memoria disponible)
+    public void SuspendR_toReady(Proceso proceso){
+        if (C_Suspended_Ready.contiene(proceso)) {
             proceso.setProcessState(Status.Ready);
-            C_Suspended.remove(proceso);
+            C_Suspended_Ready.remove(proceso);
             C_Ready.encolar(proceso);
             
-            if(planificador != null) {
+            if (planificador != null) {
                 planificador.agregarProceso(proceso);
             }
         }
     }
     
-    //Suspended --> Blocked_Suspended
-    public void suspenderProcesoBloqueado(Proceso proceso) {
-        if (C_Blocked.contiene(proceso)) {
-            proceso.setProcessState(Status.Blocked_Suspended);
-            C_Blocked.remove(proceso);
-            C_Suspended.encolar(proceso);
-        }
-    }
-    
-    //Blocked_Suspended --> Ready_Suspended
-    public void reanudarProcesoSuspendido(Proceso proceso) {
-        if (C_Suspended.contiene(proceso) && proceso.getProcessState() == Status.Blocked_Suspended) {
-            proceso.setProcessState(Status.Ready_Suspended);
+    // Suspended_Blocked ----> Blocked (memoria disponible)
+    public void SuspendB_toBlocked(Proceso proceso){
+        if (C_Suspended_Blocked.contiene(proceso)) {
+            proceso.setProcessState(Status.Blocked);
+            C_Suspended_Blocked.remove(proceso);
+            C_Blocked.encolar(proceso);
         }
     }
     
@@ -151,7 +158,8 @@ public class ProcessManager {
         
         C_Ready.remove(proceso);
         C_Blocked.remove(proceso);
-        C_Suspended.remove(proceso);
+        C_Suspended_Ready.remove(proceso);
+        C_Suspended_Blocked.remove(proceso);
         
         if(!C_finished.contiene(proceso)) {
             C_finished.encolar(proceso);
@@ -170,9 +178,23 @@ public class ProcessManager {
         return C_Blocked;
     }
 
-    public Cola getC_Suspended() {
-        return C_Suspended;
+    public Cola getC_Suspended_Ready() {
+        return C_Suspended_Ready;
     }
+
+    public void setC_Suspended_Ready(Cola C_Suspended_Ready) {
+        this.C_Suspended_Ready = C_Suspended_Ready;
+    }
+
+    public Cola getC_Suspended_Blocked() {
+        return C_Suspended_Blocked;
+    }
+
+    public void setC_Suspended_Blocked(Cola C_Suspended_Blocked) {
+        this.C_Suspended_Blocked = C_Suspended_Blocked;
+    }
+
+
 
     public Cola getC_finished() {
         return C_finished;
@@ -193,8 +215,10 @@ public class ProcessManager {
     }
     
     //Método para obtener todos los procesos en el sistema
-    public int getTotalProcesos() {
-        return C_Ready.size() + C_Blocked.size() + C_Suspended.size() + C_finished.size() + (CurrentRunning_Process != null ? 1 : 0);
+   public int getTotalProcesos() {
+        return C_Ready.size() + C_Blocked.size() + 
+               C_Suspended_Ready.size() + C_Suspended_Blocked.size() + 
+               C_finished.size() + (CurrentRunning_Process != null ? 1 : 0);
     }
     
     // Setter para el planificador
@@ -203,10 +227,26 @@ public class ProcessManager {
     }
     
     // Método para obtener estadísticas básicas
-    public String getEstadisticas() {
-        return String.format("Procesos - Listos: %d, Bloqueados: %d, Suspendidos: %d, Terminados: %d, Ejecutando: %s",
-                C_Ready.size(), C_Blocked.size(), C_Suspended.size(), C_finished.size(),
-                (CurrentRunning_Process != null ? CurrentRunning_Process.getName() : "Ninguno"));
+public String getEstadisticas() {
+        return String.format(
+            "Procesos - Listos: %d, Bloqueados: %d, Suspendidos(Listos): %d, Suspendidos(Bloqueados): %d, Terminados: %d, Ejecutando: %s",
+            C_Ready.size(), 
+            C_Blocked.size(), 
+            C_Suspended_Ready.size(), 
+            C_Suspended_Blocked.size(), 
+            C_finished.size(),
+            (CurrentRunning_Process != null ? CurrentRunning_Process.getName() : "Ninguno")
+        );
+    }
+
+// Método para verificar si un proceso está en alguna cola
+    public boolean contieneProceso(Proceso proceso) {
+        return C_Ready.contiene(proceso) || 
+               C_Blocked.contiene(proceso) || 
+               C_Suspended_Ready.contiene(proceso) || 
+               C_Suspended_Blocked.contiene(proceso) || 
+               C_finished.contiene(proceso) ||
+               CurrentRunning_Process == proceso;
     }
     
     @Override
@@ -214,7 +254,8 @@ public class ProcessManager {
         return "ProcessManager{" +
                 "Listos=" + C_Ready.size() +
                 ", Bloqueados=" + C_Blocked.size() +
-                ", Suspendidos=" + C_Suspended.size() +
+                ", Suspendidos(Listos)=" + C_Suspended_Ready.size() +
+                ", Suspendidos(Bloqueados)=" + C_Suspended_Blocked.size() +
                 ", Terminados=" + C_finished.size() +
                 ", Ejecutando=" + (CurrentRunning_Process != null ? CurrentRunning_Process.getName() : "Ninguno") +
                 '}';
