@@ -112,9 +112,9 @@ public class Proceso {
     public boolean generate_EXC(){
        if (isCPUbound || ciclosParaExcepcion == 0) {
            return false; //CPU bound no genera excepciones I/O
-       }
+                 }
        
-       boolean debeGenerar = !isCPUbound && (ciclosDesdeUltimaExcepcion >= ciclosParaExcepcion) && (ciclos_ejecutados > 0);
+       boolean debeGenerar = (ciclosDesdeUltimaExcepcion >= ciclosParaExcepcion) && (ciclos_ejecutados > 0);
        if (debeGenerar) {
            ciclosDesdeUltimaExcepcion = 0; //Reiniciar contador
        }

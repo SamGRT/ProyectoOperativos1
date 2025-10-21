@@ -7,6 +7,7 @@ package Simulacion;
 import model.Proceso;
 import model.Status;
 import Edd.Cola;
+import Planificacion.AlgoritmoPlanificacion;
 import Planificacion.FCFS;
 /**
  *
@@ -21,7 +22,7 @@ public class ProcessManager {
     private Cola C_finished;
     
     private Proceso CurrentRunning_Process;
-    private FCFS planificador;
+    private AlgoritmoPlanificacion planificador;
 
     public ProcessManager() {
         this.C_Ready = new Cola();
@@ -34,7 +35,7 @@ public class ProcessManager {
     }
     
     //Constructor con planificador integrado
-    public ProcessManager(FCFS planificador) {
+    public ProcessManager(FCFS planificador) { //sospe
         this.C_Ready = new Cola();
         this.C_Blocked = new Cola();
         this.C_Suspended_Ready = new Cola();
@@ -66,27 +67,36 @@ public class ProcessManager {
     }
     
    // Ready --> Running o Running --> Ready
-    public void setRunningProcess (Proceso proceso){
-        if (CurrentRunning_Process  != null) {
-            CurrentRunning_Process.setProcessState(Status.Ready);
-            C_Ready.encolar(CurrentRunning_Process);
-        }
+    public void setRunningProcess(Proceso proceso) {
+    if (CurrentRunning_Process != null && CurrentRunning_Process != proceso) {
         
-        if (proceso != null) {
-            proceso.setProcessState(Status.Running);
-            C_Ready.remove(proceso);
+        if (CurrentRunning_Process.getProcessState() == Status.Running) {
+            CurrentRunning_Process.setProcessState(Status.Ready);
+            if (!C_Ready.contiene(CurrentRunning_Process)) {
+                C_Ready.encolar(CurrentRunning_Process);
+            }
         }
-        CurrentRunning_Process = proceso;
     }
     
+    if (proceso != null) {
+        proceso.setProcessState(Status.Running);
+        C_Ready.remove(proceso); 
+    }
+    CurrentRunning_Process = proceso;
+}
+    
     // Running --> BLocked
-    public void  BlockCurrentProcess(){
-        if (CurrentRunning_Process != null) {
+   public void BlockCurrentProcess(){
+    if (CurrentRunning_Process != null) {
+        
+        if (!C_Blocked.contiene(CurrentRunning_Process)) {
             CurrentRunning_Process.setProcessState(Status.Blocked);
             C_Blocked.encolar(CurrentRunning_Process);
-            CurrentRunning_Process = null;
+
         }
+        CurrentRunning_Process = null;
     }
+}
     
     //Blocked --> Ready (cuando se completaI/O)
     public void unblockProcess(Proceso proceso) {
@@ -145,12 +155,21 @@ public class ProcessManager {
     
     //END process (Running --> Finished)
     public void EndProcess(){
-        if (CurrentRunning_Process != null) {
+    if (CurrentRunning_Process != null) {
+        
+        if (CurrentRunning_Process.End()) {
             CurrentRunning_Process.setProcessState(Status.Finished);
             C_finished.encolar(CurrentRunning_Process);
-            CurrentRunning_Process = null;
+            
+        } else {
+            // Si no terminó, regresar a Ready
+            CurrentRunning_Process.setProcessState(Status.Ready);
+            C_Ready.encolar(CurrentRunning_Process);
+            
         }
+        CurrentRunning_Process = null;
     }
+}
     
     //Termina el proceso desde cualquier estado
     public void terminarProceso(Proceso proceso) {
@@ -222,7 +241,7 @@ public class ProcessManager {
     }
     
     // Setter para el planificador
-    public void setPlanificador(FCFS planificador) {
+    public void setPlanificador(AlgoritmoPlanificacion planificador) {
         this.planificador = planificador;
     }
     

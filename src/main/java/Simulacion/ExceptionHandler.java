@@ -15,12 +15,14 @@ public class ExceptionHandler implements Runnable {
     private Logger logger;
     private boolean ejecutando;
     private Thread hiloExcepciones;
-    
-    public ExceptionHandler() {
+    private ProcessManager processManager;
+            
+    public ExceptionHandler(ProcessManager processManager) {
         this.colaBloqueados = new Cola();
         this.semaforoCola  = new Semaforo(1);
         this.logger = Logger.getInstancia();
         this.ejecutando = false;
+        this.processManager = processManager;
     }
     
     public void iniciar() {
@@ -118,14 +120,22 @@ public class ExceptionHandler implements Runnable {
         }
     }
     
-    private boolean procesarCicloES(Proceso proceso) {
+ private boolean procesarCicloES(Proceso proceso) {
         if (proceso.getCiclosPendientes() > 0) {
-            // Decrementar ciclos pendientes
             proceso.setCiclosPendientes(proceso.getCiclosPendientes() - 1);
-            return proceso.getCiclosPendientes() <= 0;
+            
+            if (proceso.getCiclosPendientes() <= 0) {
+                // ✅ E/S COMPLETADA - mover de vuelta a Ready
+                if (processManager != null) {
+                    processManager.unblockProcess(proceso);
+                }
+                return true;
+            }
+            return false;
         }
-        return true; // Si no hay ciclos pendientes, considerar completado
+        return true;
     }
+
     
     private void notificarProcesoListo(Proceso proceso) {
         logger.log(String.format("PROCESO LISTO: %s disponible para planificación", proceso.getName()));

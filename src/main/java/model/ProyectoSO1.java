@@ -3,7 +3,6 @@
  */
 
 package model;
-import Testing.PruebaDepuracionIO;
 
 /**
  *
@@ -12,6 +11,6 @@ import Testing.PruebaDepuracionIO;
 public class ProyectoSO1 {
 
     public static void main(String[] args) {
-        PruebaDepuracionIO.main(args);
+        gui.mainWindow.main(args);
     }
 }

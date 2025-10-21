@@ -18,7 +18,7 @@ public class Planificador implements Runnable {
     private Logger logger;
     private Semaforo semaforoCambio;
     
-    public Planificador(CPU cpu) {
+    public Planificador(CPU cpu, ProcessManager processManager) {
         this.algoritmoActual = new FCFS(); // Por defecto FCFS
         this.cpu = cpu;
         this.ejecutando = false;
@@ -59,22 +59,31 @@ public class Planificador implements Runnable {
         logger.log("Planificador detenido");
     }
     
-    @Override
-    public void run() {
-        while (ejecutando && !Thread.currentThread().isInterrupted()) {
-            try {
+   @Override
+public void run() {
+    while (ejecutando && !Thread.currentThread().isInterrupted()) {
+        try {
+            // ESPERAR antes de verificar de nuevo
+            Thread.sleep(Clock.getInstance().getCycleDuration() / 2);
+            
+         //SOLO seleccionar nuevo proceso si la CPU está libre
+            if (cpu.getProcesoActual() == null) {
                 Proceso siguienteProceso = algoritmoActual.obtenerSiguienteProceso();
                 if (siguienteProceso != null) {
+                    logger.log(String.format("[Ciclo %d] Planificador %s selecciona Proceso %s",
+                        Clock.getInstance().getCurrentCycle(),
+                        algoritmoActual.getNombre(),
+                        siguienteProceso.getName()));
                     cpu.ejecutarProceso(siguienteProceso);
                 }
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            break;
         }
     }
-    
+}
+
     public void agregarProceso(Proceso proceso) {
         algoritmoActual.agregarProceso(proceso);
     }
