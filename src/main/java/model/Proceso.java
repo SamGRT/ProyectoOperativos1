@@ -21,11 +21,11 @@ public class Proceso {
     private int ciclosPendientes; //ciclos para satisfacer excepcion
     private int ciclos_ejecutados; 
     private int ciclosDesdeUltimaExcepcion;
-    private static int nextId = 1;  // Generador de IDs únicos
+    private static int nextId = 0;  // Generador de IDs únicos
 
     /*Lo que coloca el user**/
 
-    public Proceso(int id, String name, int Total_Instructions, boolean isCPUbound, int ciclosParaExcepcion, int ciclosPendientes) {
+    public Proceso( String name, int Total_Instructions, boolean isCPUbound, int ciclosParaExcepcion, int ciclosPendientes) {
         this.id = nextId++;
         this.name = name;
         this.ProcessState = Status.New;
@@ -39,15 +39,7 @@ public class Proceso {
         this.ciclosDesdeUltimaExcepcion = 0;
     }
 
-    public Proceso(Status ProcessState, int PC, int mar) {
-        this.ProcessState = ProcessState;
-        this.PC = PC;
-        this.mar = mar;
-        this.id = 0;
-        this.name = null;
-        this.Total_Instructions = 0;
-        this.isCPUbound = false;
-    }
+
 
     public int getId() {
         return id;

@@ -73,7 +73,7 @@ public class CPU implements Runnable {
     }
 }
     
-   @Override
+@Override
 public void run() {
     Clock.getInstance().start();
     while (ejecutando && !Thread.currentThread().isInterrupted()) {
@@ -82,19 +82,23 @@ public void run() {
             semaforoCPU.adquirir();
 
             if (procesoActual != null && processManager != null) {
-                // ✅ VERIFICAR SI TERMINÓ ANTES de ejecutar
-                if (procesoActual.End()) {
-                    logger.log(String.format("Proceso %s TERMINADO - Moviendo a Finished", 
-                        procesoActual.getName()));
-                    processManager.EndProcess();
+                // Verificar estado antes de ejecutar
+                if (procesoActual.End() || procesoActual.getProcessState() == Status.Blocked) {
+                    logger.log(String.format("Proceso %s en estado inválido (%s) - Liberando CPU", 
+                        procesoActual.getName(), 
+                        procesoActual.End() ? "TERMINADO" : "BLOQUEADO"));
+                    
+                    if (procesoActual.End()) {
+                        processManager.EndProcess();
+                    }
                     procesoActual = null;
                     processManager.setRunningProcess(null);
                     
                     semaforoCPU.liberar();
-                    continue; // Pasar al siguiente ciclo
+                    continue;
                 }
                 
-                // Si no terminó, ejecutar instrucción
+                // Ejecutar instrucción
                 boolean instruccionEjecutada = procesoActual.executeInstruction();
                 ciclosReloj++;
 
@@ -105,19 +109,15 @@ public void run() {
                             procesoActual.getTotal_Instructions(),
                             procesoActual.getMar()));
 
-                    // VERIFICAR SI TERMINÓ DESPUÉS de ejecutar
+                    // Verificar si terminó después de ejecutar
                     if (procesoActual.End()) {
                         logger.log(String.format("Proceso %s COMPLETADO", procesoActual.getName()));
                         processManager.EndProcess();
                         procesoActual = null;
                         processManager.setRunningProcess(null);
-                        
-                        semaforoCPU.liberar();
-                        continue;
-                    }
-
-                    // VERIFICAR EXCEPCIÓN I/O
-                    if (procesoActual.generate_EXC()) {
+                    } 
+                    // Verificar excepción I/O
+                    else if (procesoActual.generate_EXC()) {
                         logger.log(String.format("¡EXCEPCIÓN I/O! Proceso %s solicita E/S", 
                             procesoActual.getName()));
                         processManager.BlockCurrentProcess();

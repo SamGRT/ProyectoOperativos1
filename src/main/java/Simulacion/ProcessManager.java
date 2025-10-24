@@ -20,9 +20,11 @@ public class ProcessManager {
     private Cola C_Suspended_Ready;
     private Cola C_Suspended_Blocked;
     private Cola C_finished;
+
     
     private Proceso CurrentRunning_Process;
     private AlgoritmoPlanificacion planificador;
+    
 
     public ProcessManager() {
         this.C_Ready = new Cola();
@@ -32,6 +34,7 @@ public class ProcessManager {
         this.C_finished =new Cola();
         this.CurrentRunning_Process =null;
         this.planificador = null;
+       
     }
     
     //Constructor con planificador integrado
@@ -92,25 +95,49 @@ public class ProcessManager {
         if (!C_Blocked.contiene(CurrentRunning_Process)) {
             CurrentRunning_Process.setProcessState(Status.Blocked);
             C_Blocked.encolar(CurrentRunning_Process);
+             
 
         }
         CurrentRunning_Process = null;
     }
 }
+   
+
     
     //Blocked --> Ready (cuando se completaI/O)
     public void unblockProcess(Proceso proceso) {
-        if (C_Blocked.contiene(proceso)) {
-            proceso.setProcessState(Status.Ready);
+      if (C_Blocked.contiene(proceso)) {
             C_Blocked.remove(proceso);
-            C_Ready.encolar(proceso);
-            
-            //Se notifica al planificador
-            if (planificador != null) {
-                planificador.agregarProceso(proceso);
-            }
         }
+        
+        proceso.setProcessState(Status.Ready);
+        C_Ready.encolar(proceso);
+         if (planificador != null && planificador instanceof FCFS) {
+            ((FCFS) planificador).liberarProcesoActual();
+        }
+        // Notificar al planificador
+        if (planificador != null) {
+            planificador.agregarProceso(proceso);
+        }
+        
+        
     }
+    
+    // temporal
+    public String debugEstadoCompleto() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== DEBUG COMPLETO DEL SISTEMA ===\n");
+    sb.append("Reloj: ").append(Clock.getInstance().getCurrentCycle()).append("\n");
+    sb.append("CPU ejecutando: ").append(CurrentRunning_Process != null ? CurrentRunning_Process.getName() : "NULL").append("\n");
+    sb.append("Proceso en CPU: ").append(CurrentRunning_Process != null ? CurrentRunning_Process.getName() : "NULL").append("\n");
+    sb.append("Cola Ready: ").append(C_Ready.size()).append(" procesos\n");
+    sb.append("Cola Blocked: ").append(C_Blocked.size()).append(" procesos\n");
+    sb.append("Cola Suspended_Ready: ").append(C_Suspended_Ready.size()).append(" procesos\n");
+    sb.append("Cola Suspended_Blocked: ").append(C_Suspended_Blocked.size()).append(" procesos\n");
+    sb.append("Cola Finished: ").append(C_finished.size()).append(" procesos\n");
+    sb.append("=== FIN DEBUG ===");
+    return sb.toString();
+}
     
  //Ready --> Suspended_Ready (por falta de memoria)
     public void SuspendReadyProcess(Proceso proceso){

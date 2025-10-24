@@ -18,6 +18,7 @@ import Edd.Cola;
 import Edd.ListaEnlazada;
 import java.awt.BorderLayout;
 import utils.MetricsCalculator;
+import Simulacion.ExceptionHandler;
 
 /**
  *
@@ -37,7 +38,7 @@ public class mainWindow extends javax.swing.JFrame {
     private boolean simulationRunning = false;
     private int currentCycleDuration = 500; 
     
-    private static int ProcessId = 0;
+   
     private javax.swing.JPanel colaListosPanel; //paneles de pcb listos
     private javax.swing.JPanel colaBloqueadosPanel;
     private javax.swing.JPanel colaSuspendedReadyPanel;
@@ -56,6 +57,7 @@ public class mainWindow extends javax.swing.JFrame {
     private SimpleChartPanel utilizacionChart;
     private SimpleChartPanel equidadChart;
     private SimpleChartPanel tiempoRespuestaChart;
+    private ExceptionHandler exceptionHandler;
     
     /**
      * Creates new form mainWindow
@@ -88,7 +90,9 @@ public class mainWindow extends javax.swing.JFrame {
         this.processManager = new ProcessManager();
         this.cpu = new CPU(processManager);
         this.planificador = new Planificador(cpu,processManager);
-        
+        //conectar manejador de excepciones
+        this.exceptionHandler = new ExceptionHandler(processManager);
+    exceptionHandler.iniciar();
         // Configurar timer para la simulación
         simulacionTimer = new Timer(currentCycleDuration, new ActionListener() {
             @Override
@@ -171,11 +175,10 @@ public class mainWindow extends javax.swing.JFrame {
          jTabbedPane1.addTab("Gráficas y Métricas", metricsPanel);
      }
   
-     private void debugEstadoCompleto() {
+  /*   private void debugEstadoCompleto() {
     System.out.println("=== DEBUG COMPLETO DEL SISTEMA ===");
     System.out.println("Reloj: " + Clock.getInstance().getCurrentCycle());
     System.out.println("CPU ejecutando: " + (cpu.isEjecutando() ? "SÍ" : "NO"));
-    System.out.println("Planificador ejecutando: " + (planificador.isEjecutando() ? "SÍ" : "NO"));
     
     // Ver proceso en CPU
     Proceso cpuProcess = cpu.getProcesoActual();
@@ -183,22 +186,16 @@ public class mainWindow extends javax.swing.JFrame {
     System.out.println("Proceso en CPU: " + (cpuProcess != null ? cpuProcess.getName() : "NULL"));
     System.out.println("Proceso en PM: " + (pmProcess != null ? pmProcess.getName() : "NULL"));
     
-    // Ver colas
-    System.out.println("Cola Ready: " + processManager.getC_Ready().size() + " procesos");
-    System.out.println("Cola Blocked: " + processManager.getC_Blocked().size() + " procesos");
+    // Ver colas del ProcessManager
+    System.out.println("Cola Ready (PM): " + processManager.getC_Ready().size() + " procesos");
+    System.out.println("Cola Blocked (PM): " + processManager.getC_Blocked().size() + " procesos");
     
-    // Ver estado de cada proceso en Ready
-    System.out.println("--- Procesos en Ready ---");
-    for (int i = 0; i < processManager.getC_Ready().size(); i++) {
-        Proceso p = processManager.getC_Ready().get(i);
-        if (p != null) {
-            System.out.println(p.getName() + " | Estado: " + p.getProcessState() + " | PC: " + p.getPC() + "/" + p.getTotal_Instructions());
-        }
-    }
+    // Si tienes acceso al ExceptionHandler, mostrar también su cola
+    System.out.println("Cola Blocked (EH): " + exceptionHandler.getProcesosBloqueados() + " procesos");
+    
     System.out.println("=== FIN DEBUG ===");
 }
-
-
+*/
       public void startSimulation() {
         if (!simulationRunning) {
             simulationRunning = true;
@@ -229,7 +226,8 @@ public class mainWindow extends javax.swing.JFrame {
       
       private void updateGUI() {
         // Actualizar colas de procesos
-        debugEstadoCompleto();
+       
+        System.out.println(processManager.debugEstadoCompleto());
         updateReadyC();
         updateBlockedC();
         updateSuspendedC() ;
@@ -421,7 +419,7 @@ public class mainWindow extends javax.swing.JFrame {
             // Crear proceso
             boolean isCPUbound = tipo.equals("CPU bound");
             
-            Proceso proceso = new Proceso(ProcessId, nombre, instrucciones, isCPUbound, ciclosExcepcion, ciclosSatisfacer);
+            Proceso proceso = new Proceso( nombre, instrucciones, isCPUbound, ciclosExcepcion, ciclosSatisfacer);
             
             // Agregar proceso al manager
             processManager.addProcess(proceso); //se agrega el proceso a la cola de listos
@@ -438,7 +436,7 @@ public class mainWindow extends javax.swing.JFrame {
             updateGUI();
             
             mostrarMensaje("Proceso '" + nombre + "' creado exitosamente");
-            ProcessId++;
+           
             
         } catch (Exception e) {
             mostrarError("Error al crear proceso: " + e.getMessage());

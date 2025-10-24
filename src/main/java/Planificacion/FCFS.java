@@ -36,37 +36,53 @@ public class FCFS implements AlgoritmoPlanificacion {
         }
     }
     
-    @Override
-    public Proceso obtenerSiguienteProceso() {
+  @Override
+public Proceso obtenerSiguienteProceso() {
+    try {
+        semaforoCola.adquirir();
+        
+        // SIEMPRE verificar si el proceso actual sigue siendo válido
+        if (procesoActual != null) {
+            boolean procesoValido = (procesoActual.getProcessState() == Status.Running) && 
+                                   !procesoActual.End() && 
+                                   colaListos.contiene(procesoActual);
+            
+            if (!procesoValido) {
+                logger.log(String.format("FCFS: Proceso actual %s no es válido (Estado: %s), limpiando", 
+                    procesoActual.getName(), procesoActual.getProcessState()));
+                procesoActual = null;
+            }
+        }
+        
+        // SIEMPRE intentar obtener nuevo proceso si no hay uno actual
+        if (procesoActual == null) {
+            procesoActual = colaListos.desencolar();
+            if (procesoActual != null) {
+                procesoActual.setProcessState(Status.Running);
+                logger.log(String.format("Planificador FCFS selecciona Proceso %s", procesoActual.getName()));
+            }
+        }
+        
+        semaforoCola.liberar();
+        return procesoActual;
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.log("Error al obtener el siguiente proceso: " + e.getMessage());
+        return null;
+    }
+}
+    public void liberarProcesoActual() {
         try {
             semaforoCola.adquirir();
-            
-            if (procesoActual != null && !procesoActual.End()) {
-                semaforoCola.liberar();
-                return procesoActual;
+            if (procesoActual != null) {
+                logger.log(String.format("FCFS: Liberando proceso actual %s", procesoActual.getName()));
+                procesoActual = null;
             }
-            
-            Proceso siguiente = colaListos.desencolar();
-            if (siguiente != null) {
-                siguiente.setProcessState(Status.Running);
-                logger.log(String.format("Planificador FCFS selecciona Proceso %s", siguiente.getName()));
-            }
-            procesoActual = siguiente;
             semaforoCola.liberar();
-            return siguiente;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.log("Error al obtener el siguiente proceso: " + e.getMessage());
-            return null;
         }
     }
-    
-    public void devolverProceso(Proceso proceso) {
-        if (proceso != null && !proceso.End()) {
-            agregarProceso(proceso);
-        }
-    }
-    
     @Override
     public Cola getColaListos() {
         return colaListos;

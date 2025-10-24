@@ -18,7 +18,7 @@ public class ExceptionHandler implements Runnable {
     private ProcessManager processManager;
             
     public ExceptionHandler(ProcessManager processManager) {
-        this.colaBloqueados = new Cola();
+        this.colaBloqueados = processManager.getC_Blocked();
         this.semaforoCola  = new Semaforo(1);
         this.logger = Logger.getInstancia();
         this.ejecutando = false;
@@ -85,6 +85,7 @@ public class ExceptionHandler implements Runnable {
                 
                 Cola nuevaCola = new Cola();
                 int procesosProcesados = 0;
+                int procesosDesbloqueados = 0;
                 
                 while (!colaBloqueados.isEmpty()) {
                     Proceso proceso = colaBloqueados.desencolar();
@@ -98,20 +99,19 @@ public class ExceptionHandler implements Runnable {
                             logger.log(String.format("E/S en progreso: %s - Ciclos restantes: %d", 
                                 proceso.getName(), proceso.getCiclosPendientes()));
                         } else {
-                            // E/S completada
-                            proceso.setProcessState(Status.Ready);
-                            proceso.resetAfterIO();
+                            // E/S completada - ya fue a ready por unblock process
+                           procesosDesbloqueados++;
                             logger.log(String.format("E/S COMPLETADA: Proceso %s listo para continuar", 
-                                proceso.getName()));
+                            proceso.getName()));
                         }
                     }
                 }
                 
-                // Reemplazar la cola con los procesos que aún están en E/S
-                this.colaBloqueados = nuevaCola;
+            
+                
                 
                 logger.log(String.format("E/S procesadas: %d procesos, %d aún bloqueados", 
-                    procesosProcesados, colaBloqueados.size()));
+                    procesosProcesados, procesosDesbloqueados, colaBloqueados.size()));
             }
             
             semaforoCola.liberar();
@@ -125,7 +125,7 @@ public class ExceptionHandler implements Runnable {
             proceso.setCiclosPendientes(proceso.getCiclosPendientes() - 1);
             
             if (proceso.getCiclosPendientes() <= 0) {
-                // ✅ E/S COMPLETADA - mover de vuelta a Ready
+              //  E/S COMPLETADA - mover de vuelta a Ready
                 if (processManager != null) {
                     processManager.unblockProcess(proceso);
                 }
