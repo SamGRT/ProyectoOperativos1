@@ -3,10 +3,15 @@ Planificacion\RoundRobin.class
 Edd\Cola.class
 gui\mainWindow$4.class
 Simulacion\ProcessManager.class
+utils\MetricsCalculator$MetricData.class
+gui\mainWindow$6.class
+Edd\ListaEnlazada.class
 Planificacion\MultiplesColas.class
 model\Proceso.class
 Planificacion\FCFS.class
+gui\SimpleChartPanel.class
 Planificacion\SJF.class
+utils\MetricsCalculator.class
 gui\ProcessCard.class
 Planificacion\Prioridades.class
 gui\mainWindow$1.class
@@ -15,6 +20,7 @@ Simulacion\ExceptionHandler.class
 Planificacion\AlgoritmoPlanificacion.class
 Simulacion\Planificador.class
 model\ProyectoSO1.class
+Edd\ListaEnlazada$Nodo.class
 gui\mainWindow$3.class
 model\Status.class
 Planificacion\Garantizado.class

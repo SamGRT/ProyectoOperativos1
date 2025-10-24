@@ -14,9 +14,10 @@ import Planificacion.*;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import gui.ProcessCard;
 import Edd.Cola;
+import Edd.ListaEnlazada;
 import java.awt.BorderLayout;
+import utils.MetricsCalculator;
 
 /**
  *
@@ -31,6 +32,7 @@ public class mainWindow extends javax.swing.JFrame {
     private Planificador planificador;
     private CPU cpu;
     private Timer simulacionTimer;
+    private MetricsCalculator metricsCalculator;
    
     private boolean simulationRunning = false;
     private int currentCycleDuration = 500; 
@@ -41,7 +43,20 @@ public class mainWindow extends javax.swing.JFrame {
     private javax.swing.JPanel colaSuspendedReadyPanel;
     private javax.swing.JPanel colaSuspendedBlockedPanel;
     private javax.swing.JPanel colaFinishedPanel;
-    private javax.swing.JPanel cpuPanel; 
+    private javax.swing.JPanel cpuPanel;
+    
+    //Componentes para métricas
+    private javax.swing.JPanel metricsPanel;
+    private javax.swing.JLabel throughputLabel;
+    private javax.swing.JLabel utilizacionLabel;
+    private javax.swing.JLabel equidadLabel;
+    private javax.swing.JLabel tiempoRespuestaLabel;
+    private javax.swing.JTextArea metricsTextArea;
+    private SimpleChartPanel throughputChart;
+    private SimpleChartPanel utilizacionChart;
+    private SimpleChartPanel equidadChart;
+    private SimpleChartPanel tiempoRespuestaChart;
+    
     /**
      * Creates new form mainWindow
      */
@@ -61,6 +76,7 @@ public class mainWindow extends javax.swing.JFrame {
         
   
         initializeSimulation();
+        initializeMetricsPanel();
         setupEventListeners();
         startSimulation() ;
         updateGUI();
@@ -82,8 +98,78 @@ public class mainWindow extends javax.swing.JFrame {
         });
        // Configurar duración del ciclo en el reloj
         Clock.getInstance().setCycleDuration(currentCycleDuration);
-       
     }
+     
+     private void initializeMetricsPanel() {
+         this.metricsCalculator = new MetricsCalculator(processManager);
+         
+         //Crear panel principal de métricas
+         metricsPanel = new javax.swing.JPanel();
+         metricsPanel.setLayout(new java.awt.BorderLayout());
+         
+         //Panel superior con métricas en tiempo real
+         javax.swing.JPanel metricsSummaryPanel = new javax.swing.JPanel();
+         metricsSummaryPanel.setLayout(new java.awt.GridLayout(2, 4));
+         metricsSummaryPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Métricas en Tiempo Real"));
+         
+         throughputLabel = new javax.swing.JLabel("Throughput: 0.0");
+         utilizacionLabel = new javax.swing.JLabel("Utilización CPU: 0.0%");
+         equidadLabel = new javax.swing.JLabel("Equidad: 0.0%");
+         tiempoRespuestaLabel = new javax.swing.JLabel("TiempoRespuesta: 0.0");
+         
+         metricsSummaryPanel.add(new javax.swing.JLabel("Throughput:"));
+         metricsSummaryPanel.add(throughputLabel);
+         metricsSummaryPanel.add(new javax.swing.JLabel("Utilización CPU:"));
+         metricsSummaryPanel.add(utilizacionLabel);
+         metricsSummaryPanel.add(new javax.swing.JLabel("Equidad:"));
+         metricsSummaryPanel.add(equidadLabel);
+         metricsSummaryPanel.add(new javax.swing.JLabel("Tiempo Respuesta:"));
+         metricsSummaryPanel.add(tiempoRespuestaLabel);
+         
+         //Área de texto para métricas detalladas
+         metricsTextArea = new javax.swing.JTextArea();
+         metricsTextArea.setEditable(false);
+         metricsTextArea.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 12));
+         javax.swing.JScrollPane metricsScrollPane = new javax.swing.JScrollPane(metricsTextArea);
+         metricsScrollPane.setBorder(javax.swing.BorderFactory.createTitledBorder("Historial Detallado"));
+         metricsScrollPane.setPreferredSize(new java.awt.Dimension(400, 200));
+         
+         //Panel de gráficas con pestañas
+         javax.swing.JTabbedPane chartsTabbedPane = new javax.swing.JTabbedPane();
+         
+         throughputChart = new SimpleChartPanel("Throughput", java.awt.Color.BLUE);
+         utilizacionChart = new SimpleChartPanel("Utilización CPU", java.awt.Color.GREEN);
+         equidadChart = new SimpleChartPanel("Equidad", java.awt.Color.ORANGE);
+         tiempoRespuestaChart = new SimpleChartPanel("Tiempo Respuesta", java.awt.Color.RED);
+         
+         chartsTabbedPane.addTab("Throughput", throughputChart);
+         chartsTabbedPane.addTab("Utilización CPU", utilizacionChart);
+         chartsTabbedPane.addTab("Equidad", equidadChart);
+         chartsTabbedPane.addTab("Tiempo Respuesta", tiempoRespuestaChart);
+         
+         //Timer para actualizar gráficas
+         Timer chartsTimer = new Timer(2000, new ActionListener() {
+             @Override
+             public void actionPerformed(ActionEvent e) {
+                 if (metricsCalculator != null) {
+                     ListaEnlazada historial = metricsCalculator.getUltimasMetricas(50);
+                     throughputChart.setDatos(historial);
+                     utilizacionChart.setDatos(historial);
+                     equidadChart.setDatos(historial);
+                     tiempoRespuestaChart.setDatos(historial);
+                 }
+             }
+         });
+         chartsTimer.start();
+         
+         //Organizar layout
+         metricsPanel.add(metricsSummaryPanel, java.awt.BorderLayout.NORTH);
+         metricsPanel.add(metricsScrollPane, java.awt.BorderLayout.CENTER);
+         metricsPanel.add(chartsTabbedPane, java.awt.BorderLayout.SOUTH);
+         
+         jTabbedPane1.remove(metrics);
+         jTabbedPane1.addTab("Gráficas y Métricas", metricsPanel);
+     }
   
      private void debugEstadoCompleto() {
     System.out.println("=== DEBUG COMPLETO DEL SISTEMA ===");
@@ -151,7 +237,7 @@ public class mainWindow extends javax.swing.JFrame {
         updateRunningProcess();
         updateClockDisplay();
         updateSchedulerInfo();
-        //updateMetrics();
+        updateMetricsDisplay();
         
     }
     private void updateSchedulerInfo() {
@@ -272,10 +358,32 @@ public class mainWindow extends javax.swing.JFrame {
         clock.setText(Clock.getInstance().getCurrentCycle() + " ciclos");
     }
     
-    private void updateMetrics() {
-        // Actualizar métricas de rendimiento
-        String estadisticas = processManager.getEstadisticas();
-        // Puedes mostrar esto en un área de texto o labels específicos
+    private void updateMetricsDisplay() {
+        if (metricsCalculator != null) {
+            metricsCalculator.capturarMetricas();
+            MetricsCalculator.MetricData metricas = metricsCalculator.getMetricasActuales();
+
+            // Actualizar labels
+            throughputLabel.setText(String.format("Throughput: %.2f proc/seg", metricas.throughput));
+            utilizacionLabel.setText(String.format("Utilización CPU: %.1f%%", metricas.utilizacionCPU));
+            equidadLabel.setText(String.format("Equidad: %.1f%%", metricas.equidad));
+            tiempoRespuestaLabel.setText(String.format("Tiempo Respuesta: %.1f ciclos", metricas.tiempoRespuestaPromedio));
+
+            // Actualizar área de texto con historial usando ListaEnlazada
+            StringBuilder sb = new StringBuilder();
+            sb.append("Ciclo\tThroughput\tUtilización\tEquidad\tT. Respuesta\n");
+            sb.append("------------------------------------------------------------\n");
+
+            ListaEnlazada historial = metricsCalculator.getUltimasMetricas(20); // Últimos 20 registros
+
+            for (int i = 0; i < historial.tamaño(); i++) {
+                MetricsCalculator.MetricData data = (MetricsCalculator.MetricData) historial.obtener(i);
+                sb.append(String.format("%d\t%.2f\t%.1f%%\t%.1f%%\t%.1f\n", 
+                    data.ciclo, data.throughput, data.utilizacionCPU, data.equidad, data.tiempoRespuestaPromedio));
+            }
+
+            metricsTextArea.setText(sb.toString());
+        }
     }
     
      private void mostrarError(String mensaje) {
@@ -368,7 +476,7 @@ public class mainWindow extends javax.swing.JFrame {
                     nuevoAlgoritmo = new Garantizado();
                     break;
                 case  "Multiples Colas":
-                    nuevoAlgoritmo = new Garantizado();
+                    nuevoAlgoritmo = new MultiplesColas();
                     break;
                 default:
                     mostrarError("Política no implementada: " + politicaSeleccionada);

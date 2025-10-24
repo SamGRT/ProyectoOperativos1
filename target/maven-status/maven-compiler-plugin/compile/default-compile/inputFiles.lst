@@ -1,20 +1,23 @@
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\Edd\Cola.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\gui\mainWindow.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\gui\ProcessCard.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\model\Proceso.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\model\ProyectoSO1.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\model\Status.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\Planificacion\AlgoritmoPlanificacion.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\Planificacion\FCFS.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\Planificacion\Garantizado.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\Planificacion\MultiplesColas.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\Planificacion\Prioridades.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\Planificacion\RoundRobin.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\Planificacion\SJF.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\Simulacion\Clock.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\Simulacion\CPU.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\Simulacion\ExceptionHandler.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\Simulacion\Planificador.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\Simulacion\ProcessManager.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\utils\Logger.java
-C:\Users\Samantha\Documents\UNIMET\Sistemas Operativos\ProyectoSO1\src\main\java\utils\Semaforo.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Edd\Cola.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Edd\ListaEnlazada.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\gui\mainWindow.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\gui\ProcessCard.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\gui\SimpleChartPanel.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\model\Proceso.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\model\ProyectoSO1.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\model\Status.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Planificacion\AlgoritmoPlanificacion.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Planificacion\FCFS.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Planificacion\Garantizado.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Planificacion\MultiplesColas.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Planificacion\Prioridades.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Planificacion\RoundRobin.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Planificacion\SJF.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Simulacion\Clock.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Simulacion\CPU.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Simulacion\ExceptionHandler.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Simulacion\Planificador.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\Simulacion\ProcessManager.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\utils\Logger.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\utils\MetricsCalculator.java
+C:\Users\sarazo\Documents\UNIMET\Operativos\ProyectoOperativos1\src\main\java\utils\Semaforo.java
