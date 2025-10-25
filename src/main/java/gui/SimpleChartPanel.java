@@ -55,16 +55,21 @@ public class SimpleChartPanel extends JPanel {
         double rango = maxValor - minValor;
         if (rango == 0) rango = 1; //Evitar division por cero
         
+        System.out.println("Gráfica " + tipoGrafica + " - Min: " + minValor + ", Max: " + maxValor + ", Rango: " + rango);//DEBUG
+        
         //Dibujar datos
         g2d.setColor(colorGrafica);
         int puntoAnteriorX = -1, puntoAnteriorY = -1;
         
         for (int i = 0; i < datos.tamaño(); i++) {
             MetricsCalculator.MetricData data = (MetricsCalculator.MetricData) datos.obtener(i);
+            if(data == null) continue;
             double valor = getValue(data);
             
+            System.out.println("Punto " + i + ": " + valor);//DEBUG
+            
             int x = padding + (i * (width - 2 * padding) / Math.max(1, datos.tamaño() - 1));
-            int y = height - padding - (int)((valor - minValor) + (height - 2 * padding) / rango);
+            int y = height - padding - (int)((valor - minValor) * (height - 2 * padding) / rango);
             
             //Dibujar punto
             g2d.fillOval(x - 2, y - 2, 4, 4);
@@ -86,11 +91,13 @@ public class SimpleChartPanel extends JPanel {
     }
     
     private double getValue(MetricsCalculator.MetricData data) {
+        if (data == null) return 0;
+        
         switch (tipoGrafica) {
             case "Throughput": return data.throughput;
             case "Utilizacion CPU": return data.utilizacionCPU;
             case "Equidad": return data.equidad;
-            case "Tiempo de Respuesta": return data.tiempoRespuestaPromedio;
+            case "Tiempo Respuesta": return data.tiempoRespuestaPromedio;
             default: return 0;
         }
     }

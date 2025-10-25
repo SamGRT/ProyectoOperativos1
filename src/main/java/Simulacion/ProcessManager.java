@@ -21,6 +21,8 @@ public class ProcessManager {
     private Cola C_Suspended_Ready;
     private Cola C_Suspended_Blocked;
     private Cola C_finished;
+    private int ciclosCPUOcupados = 0;
+    private int ciclosTotales = 0;
 
     
     private Proceso CurrentRunning_Process;
@@ -47,8 +49,13 @@ public class ProcessManager {
         this.C_finished = new Cola();
         this.CurrentRunning_Process = null;
         this.planificador = planificador;
-        
-       
+    }
+    
+    public void incrementarCicloCPU(boolean ocupado) {
+        ciclosTotales++;
+        if (ocupado) {
+            ciclosCPUOcupados++;
+        }
     }
     
     // Agregar nuevo proceso al sistema a LISTO 
@@ -81,6 +88,10 @@ public class ProcessManager {
         proceso.setProcessState(Status.Running);
         C_Ready.remove(proceso); // Remover de ready
     }
+    
+    boolean cpuOcupada = (proceso != null);
+    incrementarCicloCPU(cpuOcupada);
+    
     CurrentRunning_Process = proceso;
 }
     
@@ -256,6 +267,24 @@ public class ProcessManager {
 
     public Proceso getCurrentRunning_Process() {
         return CurrentRunning_Process;
+    }
+    
+    public int getCiclosCPUOcupados() {
+        return ciclosCPUOcupados;
+    }
+    
+    public int getCiclosTotales() {
+        return ciclosTotales;
+    }
+    
+    public double getPorcentajeUtilizacionCPU() {
+        if (ciclosTotales == 0) return 0;
+        return (double) ciclosCPUOcupados / ciclosTotales * 100;
+    }
+    
+    public void reiniciarEstadisticasCPU() {
+        ciclosCPUOcupados = 0;
+        ciclosTotales = 0;
     }
     
     // Verificar si hay procesos listos
