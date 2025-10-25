@@ -1,6 +1,7 @@
 // Simulacion/Planificador.java (ACTUALIZADA)
 package Simulacion;
 
+import Edd.Cola;
 import Planificacion.*;
 import model.Proceso;
 import utils.Logger;
@@ -20,32 +21,44 @@ public class Planificador implements Runnable {
     private ProcessManager processManager; 
     
     public Planificador(CPU cpu, ProcessManager processManager) {
-        this.algoritmoActual = new FCFS(); // Por defecto FCFS
+        this.algoritmoActual = new FCFS(processManager); // Por defecto FCFS
         this.cpu = cpu;
         this.ejecutando = false;
         this.logger = Logger.getInstancia();
         this.semaforoCambio = new Semaforo(1);
         this.processManager = processManager;
         
-         if (processManager != null && algoritmoActual instanceof FCFS) {
-            ((FCFS) algoritmoActual).setColaExterna(processManager.getC_Ready());
-        }
+        
     }
     
-    public void cambiarAlgoritmo(AlgoritmoPlanificacion nuevoAlgoritmo) {
-        // Mover procesos del algoritmo anterior al nuevo
-        if (algoritmoActual != null) {
-            Edd.Cola colaAnterior = algoritmoActual.getColaListos();
-            for (int i = 0; i < colaAnterior.size(); i++) {
-                Proceso p = colaAnterior.get(i);
-                if (p != null && !p.End()) {
-                    nuevoAlgoritmo.agregarProceso(p);
+       public void cambiarAlgoritmo(AlgoritmoPlanificacion nuevoAlgoritmo) {
+        try {
+            semaforoCambio.adquirir();
+            
+            System.out.println("[DEBUG Planificador] Cambiando algoritmo a: " + nuevoAlgoritmo.getNombre());
+            
+            // Transferir procesos de la cola Ready del ProcessManager al nuevo algoritmo
+            if (processManager != null && processManager.getC_Ready() != null) {
+                Cola colaReady = processManager.getC_Ready();
+                System.out.println("[DEBUG Planificador] Procesos en cola Ready antes del cambio: " + colaReady.size());
+                
+                // Transferir procesos al nuevo algoritmo
+                for (int i = 0; i < colaReady.size(); i++) {
+                    Proceso p = colaReady.get(i);
+                    if (p != null && !p.End()) {
+                        nuevoAlgoritmo.agregarProceso(p);
+                        System.out.println("[DEBUG Planificador] Proceso transferido: " + p.getName());
+                    }
                 }
             }
+            
+            this.algoritmoActual = nuevoAlgoritmo;
+            logger.log("Algoritmo cambiado a: " + nuevoAlgoritmo.getNombre());
+            
+            semaforoCambio.liberar();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
-        
-        this.algoritmoActual = nuevoAlgoritmo;
-        logger.log("Algoritmo cambiado a: " + nuevoAlgoritmo.getNombre());
     }
     
     public void iniciar() {

@@ -9,6 +9,7 @@ import model.Status;
 import Edd.Cola;
 import Planificacion.AlgoritmoPlanificacion;
 import Planificacion.FCFS;
+import Planificacion.RoundRobin;
 /**
  *
  * @author Samantha
@@ -47,9 +48,7 @@ public class ProcessManager {
         this.CurrentRunning_Process = null;
         this.planificador = planificador;
         
-        if (planificador != null) {
-            planificador.setColaExterna(this.C_Ready);
-        }
+       
     }
     
     // Agregar nuevo proceso al sistema a LISTO 
@@ -96,9 +95,13 @@ public class ProcessManager {
              
 
         }
-        if (planificador != null && planificador instanceof FCFS) {
-            ((FCFS) planificador).liberarProcesoActual();
-        }
+      if (planificador != null) {
+                if (planificador instanceof RoundRobin) {
+                    ((RoundRobin) planificador).notificarBloqueo(CurrentRunning_Process);
+                } else if (planificador instanceof FCFS) {
+                    ((FCFS) planificador).liberarProcesoActual();
+                }
+            }
 
         CurrentRunning_Process = null;
     }
@@ -108,22 +111,18 @@ public class ProcessManager {
     
     //Blocked --> Ready (cuando se completaI/O)
     public void unblockProcess(Proceso proceso) {
-      if (C_Blocked.contiene(proceso)) {
-            C_Blocked.remove(proceso);
-        }
-        
-        proceso.setProcessState(Status.Ready);
-        C_Ready.encolar(proceso);
-         if (planificador != null && planificador instanceof FCFS) {
-            ((FCFS) planificador).liberarProcesoActual();
-        }
-        // Notificar al planificador
-        if (planificador != null) {
-            planificador.agregarProceso(proceso);
-        }
-        
-        
+    if (C_Blocked.contiene(proceso)) {
+        C_Blocked.remove(proceso);
     }
+
+    proceso.setProcessState(Status.Ready);
+    
+    C_Ready.encolar(proceso);
+    
+    System.out.println("[DEBUG] unblockProcess - Proceso " + proceso.getName() + 
+        " movido a Ready. Estado: " + proceso.getProcessState() );
+       
+}
     
     // temporal
     public String debugEstadoCompleto() {
@@ -140,7 +139,22 @@ public class ProcessManager {
     sb.append("=== FIN DEBUG ===");
     return sb.toString();
 }
-    
+   public String debugEstadoProcesos() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== DEBUG ESTADO PROCESOS ===\n");
+    sb.append("Ready: ").append(C_Ready.size()).append("\n");
+    for (int i = 0; i < C_Ready.size(); i++) {
+        Proceso p = C_Ready.get(i);
+        sb.append("  ").append(p.getName()).append(" - Estado: ").append(p.getProcessState()).append("\n");
+    }
+    sb.append("Blocked: ").append(C_Blocked.size()).append("\n");
+    for (int i = 0; i < C_Blocked.size(); i++) {
+        Proceso p = C_Blocked.get(i);
+        sb.append("  ").append(p.getName()).append(" - Estado: ").append(p.getProcessState()).append("\n");
+    }
+    sb.append("=======================\n");
+    return sb.toString();
+} 
  //Ready --> Suspended_Ready (por falta de memoria)
     public void SuspendReadyProcess(Proceso proceso){
         if (C_Ready.contiene(proceso)) {
@@ -189,6 +203,9 @@ public class ProcessManager {
         if (CurrentRunning_Process.End()) {
             CurrentRunning_Process.setProcessState(Status.Finished);
             C_finished.encolar(CurrentRunning_Process);
+            
+            if (planificador != null && planificador instanceof RoundRobin) {
+                    ((RoundRobin) planificador).notificarFinalizacion(CurrentRunning_Process);}
             
         } else {
             // Si no terminó, regresar a Ready
@@ -276,10 +293,7 @@ public class ProcessManager {
     // Setter para el planificador
     public void setPlanificador(AlgoritmoPlanificacion planificador) {
         this.planificador = planificador;
-        // Conectar la cola con el planificador
-        if (planificador instanceof FCFS) {
-            ((FCFS) planificador).setColaExterna(this.C_Ready);
-        }
+        
     }
     
     // Método para obtener estadísticas básicas

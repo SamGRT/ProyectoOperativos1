@@ -5,82 +5,153 @@ import model.Status;
 import Edd.Cola;
 import utils.Logger;
 import utils.Semaforo;
+import Simulacion.ProcessManager;
 
 /**
  *
  * @author sarazo
  */
 public class RoundRobin implements AlgoritmoPlanificacion {
-    private Cola colaListos;
+    private ProcessManager processManager;
     private Proceso procesoActual;
     private Semaforo semaforoCola;
     private Logger logger;
     private int quantum;
     private int contadorQuantum;
     
-    public RoundRobin() {
-        this.colaListos = new Cola();
+    public RoundRobin(ProcessManager processManager) {
+        this.processManager= processManager;
         this.semaforoCola = new Semaforo(1);
         this.logger = Logger.getInstancia();
         this.quantum = 3;
         this.contadorQuantum = 0;
     }
     
-    public RoundRobin(int quantum) {
-        this();
+    public RoundRobin(int quantum,ProcessManager processManager) {
+        this(processManager);
         this.quantum = quantum;
     }
     
-    @Override
-    public void agregarProceso(Proceso proceso) {
-        try {
-            semaforoCola.adquirir();
-            proceso.setProcessState(Status.Ready);
-            colaListos.encolar(proceso);
-            logger.log(String.format("Proceso %s agregado a cola Round Robin", proceso.getName()));
-            semaforoCola.liberar();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            logger.log("Error Round Robin al agregar proceso: " + e.getMessage());
-        }
+  @Override
+public void agregarProceso(Proceso proceso) {
+    try {
+        semaforoCola.adquirir();
+        
+        // ✅ SOLUCIÓN: Solo cambiar estado, NO encolar nuevamente
+        // El proceso YA debe estar en la cola ready del ProcessManager
+        proceso.setProcessState(Status.Ready);
+        
+        logger.log(String.format("Proceso %s preparado para Round Robin", proceso.getName()));
+        semaforoCola.liberar();
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.log("Error Round Robin al agregar proceso: " + e.getMessage());
     }
+}
     
-    @Override
-    public Proceso obtenerSiguienteProceso() {
-        try {
-            semaforoCola.adquirir();
-            
-            //Si hay proceso actual y no ha consumido su quantum, continuar
-            if (procesoActual != null && !procesoActual.End() && contadorQuantum < quantum) {
-                contadorQuantum++;
-                semaforoCola.liberar();
-                return procesoActual;
+   @Override
+public Proceso obtenerSiguienteProceso() {
+    try {
+        semaforoCola.adquirir();
+        
+        // DEBUG DETALLADO
+        System.out.println("[DEBUG RoundRobin] INICIO - Proceso actual: " + 
+            (procesoActual != null ? procesoActual.getName() : "null") +
+            ", Quantum: " + contadorQuantum + "/" + quantum +
+            ", Estado: " + (procesoActual != null ? procesoActual.getProcessState() : "N/A"));
+        
+        // VERIFICAR SI EL PROCESO ACTUAL SIGUE SIENDO VÁLIDO
+        if (procesoActual != null) {
+            // Si el proceso está bloqueado, terminado o suspendido, limpiarlo
+            if (procesoActual.getProcessState() == Status.Blocked || 
+                procesoActual.getProcessState() == Status.Blocked_Suspended ||
+                procesoActual.End()) {
+                
+                System.out.println("[DEBUG RoundRobin] Proceso " + procesoActual.getName() + 
+                    " no está disponible (Estado: " + procesoActual.getProcessState() + ") - Limpiando");
+                procesoActual = null;
+                contadorQuantum = 0;
             }
-            
-            //Si el proceso actual no terminó, vuelve a la cola
-            if (procesoActual != null && !procesoActual.End()) {
-                procesoActual.setProcessState(Status.Ready);
-                colaListos.encolar(procesoActual);
+            // Si el proceso está listo pero agotó el quantum, devolver a cola
+            else if (procesoActual.getProcessState() == Status.Ready && contadorQuantum >= quantum) {
+                System.out.println("[DEBUG RoundRobin] QUANTUM AGOTADO - Proceso " + procesoActual.getName() + 
+                    " devuelto a cola");
+                if (processManager != null && processManager.getC_Ready() != null) {
+                    processManager.getC_Ready().encolar(procesoActual);
+                }
                 logger.log(String.format("Quantum agotado - Proceso %s devuelto a cola", procesoActual.getName()));
+                procesoActual = null;
+                contadorQuantum = 0;
+            }
+        }
+        
+        // SI NO HAY PROCESO ACTUAL VÁLIDO, BUSCAR NUEVO
+        if (procesoActual == null) {
+            Proceso siguiente = null;
+            if (processManager != null && processManager.getC_Ready() != null) {
+                siguiente = processManager.getC_Ready().desencolar();
             }
             
-            //Obtener siguiente proceso
-            contadorQuantum = 0;
-            Proceso siguiente = colaListos.desencolar();
             if (siguiente != null) {
                 siguiente.setProcessState(Status.Running);
-                contadorQuantum = 1;
-                logger.log(String.format("Planificador Round Robin selecciona Proceso %s (Quantum %d", siguiente.getName(), quantum));
+                procesoActual = siguiente;
+                contadorQuantum = 1; // Empezar nuevo quantum
+                System.out.println("[DEBUG RoundRobin] NUEVO PROCESO seleccionado: " + 
+                    siguiente.getName() + " (quantum: " + contadorQuantum + "/" + quantum + ")");
+                logger.log(String.format("Planificador Round Robin selecciona Proceso %s (Quantum %d)", 
+                    siguiente.getName(), quantum));
+            } else {
+                System.out.println("[DEBUG RoundRobin] No hay procesos disponibles en cola");
             }
-            procesoActual = siguiente;
+        } 
+        // SI HAY PROCESO ACTUAL VÁLIDO, CONTINUAR EJECUTANDOLO
+        else if (procesoActual.getProcessState() == Status.Running) {
+            contadorQuantum++;
+            System.out.println("[DEBUG RoundRobin] CONTINUANDO con proceso: " + procesoActual.getName() + 
+                " (quantum: " + contadorQuantum + "/" + quantum + ")");
+        }
+        
+        semaforoCola.liberar();
+        return procesoActual;
+        
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return null;
+    }
+}
+
+public void notificarBloqueo(Proceso proceso) {
+        try {
+            semaforoCola.adquirir();
+            if (procesoActual == proceso) {
+                System.out.println("[DEBUG RoundRobin] Notificado bloqueo de proceso: " + proceso.getName());
+                procesoActual = null;
+                contadorQuantum = 0;
+            }
             semaforoCola.liberar();
-            return siguiente;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return null;
         }
     }
-    
+
+public void notificarFinalizacion(Proceso proceso) {
+        try {
+            semaforoCola.adquirir();
+            if (procesoActual == proceso) {
+                System.out.println("[DEBUG RoundRobin] Notificado finalización de proceso: " + proceso.getName());
+                procesoActual = null;
+                contadorQuantum = 0;
+            }
+            semaforoCola.liberar();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+     @Override
+    public Cola getColaListos() {
+        // Devolver la cola del ProcessManager, no una cola interna
+        return processManager != null ? processManager.getC_Ready() : null;
+    }
     public void setQuantum(int quantum) {
         this.quantum = quantum;
     }
@@ -89,10 +160,7 @@ public class RoundRobin implements AlgoritmoPlanificacion {
         return quantum;
     }
     
-    @Override
-    public Cola getColaListos() {
-        return colaListos;
-    }
+   
     
     @Override
     public String getNombre() {

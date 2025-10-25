@@ -95,9 +95,7 @@ public class mainWindow extends javax.swing.JFrame {
         this.cpu = new CPU(processManager);
         this.planificador = new Planificador(cpu,processManager);
         
-       if (planificador.getAlgoritmoActual() instanceof FCFS) {
-        ((FCFS) planificador.getAlgoritmoActual()).setColaExterna(processManager.getC_Ready());
-    } 
+       
         //conectar manejador de excepciones
         this.exceptionHandler = new ExceptionHandler(processManager);
     exceptionHandler.iniciar();
@@ -234,7 +232,7 @@ public class mainWindow extends javax.swing.JFrame {
       
       private void updateGUI() {
         // Actualizar colas de procesos
-       debugEstadoCompletoSistema();
+       System.out.println(processManager.debugEstadoProcesos());
         System.out.println(processManager.debugEstadoCompleto());
         updateReadyC();
         updateBlockedC();
@@ -247,16 +245,7 @@ public class mainWindow extends javax.swing.JFrame {
         
     }
       //TEMPORAL
-      private void debugEstadoCompletoSistema() {
-    System.out.println("=== DEBUG COMPLETO SISTEMA ===");
-    System.out.println("Simulation running: " + simulationRunning);
-    System.out.println("Clock running: " + (Clock.getInstance() != null && Clock.getInstance().isRunning()));
-    System.out.println("CPU ejecutando: " + (cpu != null && cpu.isEjecutando()));
-    System.out.println("Planificador ejecutando: " + (planificador != null && planificador.isEjecutando()));
-    System.out.println("Procesos en Ready: " + processManager.getC_Ready().size());
-    System.out.println("Proceso en CPU: " + (cpu != null && cpu.getProcesoActual() != null ? cpu.getProcesoActual().getName() : "null"));
-    System.out.println("=== FIN DEBUG ===");
-}
+
     private void updateSchedulerInfo() {
     if (planificador != null && planificador.getAlgoritmoActual() != null) {
         String algoritmo = planificador.getAlgoritmoActual().getNombre();
@@ -458,10 +447,7 @@ public class mainWindow extends javax.swing.JFrame {
             // Agregar proceso al manager
             processManager.addProcess(proceso); //se agrega el proceso a la cola de listos
             
-            // Si el planificador está corriendo, notificarle
-            if (planificador != null && planificador.isEjecutando()) {
-                planificador.agregarProceso(proceso);
-            }
+       
             
             // Limpiar formulario
             limpiarFormulario();
@@ -493,10 +479,10 @@ public class mainWindow extends javax.swing.JFrame {
             
             switch (politicaSeleccionada) {
                 case "Round Robin":
-                    nuevoAlgoritmo = new RoundRobin();
+                    nuevoAlgoritmo = new RoundRobin(processManager);
                     break;
                 case "FCFS":
-                    nuevoAlgoritmo = new FCFS();
+                    nuevoAlgoritmo = new FCFS(processManager);
                     break;
                 case "SJF":
                     nuevoAlgoritmo = new SJF();

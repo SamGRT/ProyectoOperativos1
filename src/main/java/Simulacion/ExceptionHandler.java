@@ -133,9 +133,10 @@ public class ExceptionHandler implements Runnable {
             
             // Verificar si la E/S ha terminado
             if (nuevosCiclos <= 0) {
+                 proceso.resetAfterIO();
                 // IMPORTANTE: Llamar a unblockProcess para mover el proceso a Ready
                 processManager.unblockProcess(proceso);
-                proceso.resetAfterIO(); 
+               
                 return true; // E/S completada
             }
             return false; // E/S aún en progreso
