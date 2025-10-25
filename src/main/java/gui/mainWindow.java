@@ -20,6 +20,7 @@ import java.awt.BorderLayout;
 import utils.MetricsCalculator;
 import Simulacion.ExceptionHandler;
 
+
 /**
  *
  * @author Samantha
@@ -94,6 +95,8 @@ public class mainWindow extends javax.swing.JFrame {
         this.processManager = new ProcessManager();
         this.cpu = new CPU(processManager);
         this.planificador = new Planificador(cpu,processManager);
+        this.processManager.setPlanificadorGeneral(planificador);
+
         
        
         //conectar manejador de excepciones
@@ -491,10 +494,10 @@ public class mainWindow extends javax.swing.JFrame {
                     nuevoAlgoritmo = new Prioridades(processManager);
                     break;
                 case  "Garantizado":
-                    nuevoAlgoritmo = new Garantizado();
+                    nuevoAlgoritmo = new Garantizado(processManager);
                     break;
                 case  "Multiples Colas":
-                    nuevoAlgoritmo = new MultiplesColas();
+                    nuevoAlgoritmo = new MultiplesColas(processManager);
                     break;
                 default:
                     mostrarError("Política no implementada: " + politicaSeleccionada);

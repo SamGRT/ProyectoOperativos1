@@ -24,47 +24,23 @@ public class SJF implements AlgoritmoPlanificacion {
     }
     
     @Override
-    public void agregarProceso(Proceso proceso) {
-        try {
-            semaforoCola.adquirir();
-            proceso.setProcessState(Status.Ready);
-            
-            int instruccionesRestantes = proceso.getTotal_Instructions() - proceso.getPC();
-            
-            Cola colaReady = processManager.getC_Ready();
-            Cola nuevaCola = new Cola();
-            boolean inserted = false;
-            
-            // CORRECCIÓN: Insertar ordenado por instrucciones restantes (menor a mayor)
-            for (int i = 0; i < colaReady.size(); i++) {
-                Proceso p = colaReady.get(i);
-                int instP = p.getTotal_Instructions() - p.getPC();
-                
-                // Insertar antes del primer proceso que tenga MÁS instrucciones
-                if (!inserted && instruccionesRestantes <= instP) {
-                    nuevaCola.encolar(proceso);
-                    inserted = true;
-                }
-                nuevaCola.encolar(p);
-            }
-            
-            // Si no se insertó (todos tienen menos instrucciones), agregar al final
-            if (!inserted) {
-                nuevaCola.encolar(proceso);
-            }
-            
-            // CORRECCIÓN: Reemplazar la cola correctamente
-            processManager.setC_Ready(nuevaCola); // Necesitas este método en ProcessManager
-            
-            logger.log(String.format("Proceso %s agregado a cola SJF (Instrucciones restantes: %d)", 
-                proceso.getName(), instruccionesRestantes));
-            semaforoCola.liberar();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            logger.log("Error SJF al agregar proceso: " + e.getMessage());
+public void agregarProceso(Proceso proceso) {
+    try {
+        semaforoCola.adquirir();
+        proceso.setProcessState(Status.Ready);
+        
+        // SOLUCIÓN: Solo encolar en la cola del ProcessManager
+        // SJF manejará la selección en obtenerSiguienteProceso()
+        if (processManager != null && processManager.getC_Ready() != null) {
+            processManager.getC_Ready().encolar(proceso);
         }
+        
+        logger.log(String.format("Proceso %s agregado a cola SJF", proceso.getName()));
+        semaforoCola.liberar();
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
     }
-
+}
     private void insertarEnPosicion(Proceso proceso, int index) {
         if (processManager.getC_Ready().size() == 0) {
             processManager.getC_Ready().encolar(proceso);
@@ -83,56 +59,51 @@ public class SJF implements AlgoritmoPlanificacion {
         Cola colaListos = processManager.getC_Ready();
         colaListos = nuevaCola;
     }
-  @Override
-    public Proceso obtenerSiguienteProceso() {
-        try {
-            semaforoCola.adquirir();
-            
-            // Si hay un proceso actual válido, continuar con él
-            if (procesoActual != null && 
-                procesoActual.getProcessState() == Status.Running && 
-                !procesoActual.End()) {
-                semaforoCola.liberar();
-                return procesoActual;
-            }
-            
-            // Limpiar proceso actual si no es válido
-            if (procesoActual != null && 
-                (procesoActual.End() || 
-                 procesoActual.getProcessState() == Status.Blocked ||
-                 procesoActual.getProcessState() == Status.Blocked_Suspended)) {
-                
-                // CORRECCIÓN: Si está bloqueado, podría volver más tarde
-                if (procesoActual.getProcessState() == Status.Blocked) {
-                    // El proceso se manejará cuando se desbloquee
-                }
-                procesoActual = null;
-            }
-            
-            // Obtener el siguiente proceso (SJF siempre toma el primero - el más corto)
-            Proceso siguiente = null;
-            if (processManager.getC_Ready() != null && !processManager.getC_Ready().isEmpty()) {
-                siguiente = processManager.getC_Ready().desencolar();
-                
-                if (siguiente != null) {
-                    siguiente.setProcessState(Status.Running);
-                    procesoActual = siguiente;
-                    
-                    int instRestantes = siguiente.getTotal_Instructions() - siguiente.getPC();
-                    logger.log(String.format("Planificador SJF selecciona Proceso %s (Inst. restantes: %d)", 
-                        siguiente.getName(), instRestantes));
-                }
-            }
-            
+ @Override
+public Proceso obtenerSiguienteProceso() {
+    try {
+        semaforoCola.adquirir();
+        
+        // Si hay proceso actual válido, continuar con él
+        if (procesoActual != null && 
+            procesoActual.getProcessState() == Status.Running && 
+            !procesoActual.End()) {
             semaforoCola.liberar();
-            return siguiente;
-            
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return null;
+            return procesoActual;
         }
-    }
 
+        // Buscar proceso con menos instrucciones restantes
+        Proceso siguiente = null;
+        if (processManager != null && processManager.getC_Ready() != null) {
+            Cola cola = processManager.getC_Ready();
+            int minInstrucciones = Integer.MAX_VALUE;
+            
+            // SOLUCIÓN: Buscar sin modificar la cola
+            for (int i = 0; i < cola.size(); i++) {
+                Proceso p = cola.get(i);
+                int instRestantes = p.getTotal_Instructions() - p.getPC();
+                if (instRestantes < minInstrucciones && p.getProcessState() == Status.Ready) {
+                    minInstrucciones = instRestantes;
+                    siguiente = p;
+                }
+            }
+            
+            if (siguiente != null) {
+                // SOLUCIÓN: Solo cambiar estado, NO modificar la cola
+                siguiente.setProcessState(Status.Running);
+                procesoActual = siguiente;
+                logger.log(String.format("Planificador SJF selecciona Proceso %s (Inst. restantes: %d)", 
+                    siguiente.getName(), minInstrucciones));
+            }
+        }
+        
+        semaforoCola.liberar();
+        return siguiente;
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return null;
+    }
+}
     
     public void liberarProcesoActual() {
         try {

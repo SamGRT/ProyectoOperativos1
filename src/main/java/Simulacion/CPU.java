@@ -1,9 +1,11 @@
 package Simulacion;
 
+import Planificacion.Garantizado;
 import model.Proceso;
 import model.Status;
 import utils.Logger;
 import utils.Semaforo;
+import Simulacion.Planificador;
 
 /**
  *
@@ -18,6 +20,7 @@ public class CPU implements Runnable {
     private int ciclosReloj;
     private ExceptionHandler manejadorExcepciones;
     private ProcessManager processManager;
+    private Planificador planificador;
     
     public CPU(ProcessManager processManager) {
         this.processManager = processManager;
@@ -110,6 +113,8 @@ public void run() {
                             procesoActual.getPC(),
                             procesoActual.getTotal_Instructions(),
                             procesoActual.getMar()));
+                    
+                    
 
                     // Verificar si terminó después de ejecutar
                     if (procesoActual.End()) {

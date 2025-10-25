@@ -119,17 +119,18 @@ public class Proceso {
     }
    
     // Ejecutar una instrucción
+ 
     public boolean executeInstruction() {
-        if (!End()) {
-            PC++;    //Por simplicidad, todos los procesos se ejecutan de manera lineal. 
-                           //Eso quiere decir que el PC y el MAR incrementarán una unidad por cada ciclo del reloj
-            mar++;
-            ciclos_ejecutados++;
-            ciclosDesdeUltimaExcepcion++;
-            return true;
-        }
+    if (End()) {
         return false;
     }
+    
+    PC++;    
+    mar++;
+    ciclos_ejecutados++;
+    ciclosDesdeUltimaExcepcion++;
+    return true;
+}
     
     @Override
     public String toString() {

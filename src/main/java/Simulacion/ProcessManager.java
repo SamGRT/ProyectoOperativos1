@@ -9,6 +9,7 @@ import model.Status;
 import Edd.Cola;
 import Planificacion.AlgoritmoPlanificacion;
 import Planificacion.FCFS;
+import Planificacion.Garantizado;
 import Planificacion.RoundRobin;
 /**
  *
@@ -25,7 +26,7 @@ public class ProcessManager {
     
     private Proceso CurrentRunning_Process;
     private AlgoritmoPlanificacion planificador;
-    
+    private Simulacion.Planificador planificadorGeneral;
 
     public ProcessManager() {
         this.C_Ready = new Cola();
@@ -54,12 +55,13 @@ public class ProcessManager {
     // Agregar nuevo proceso al sistema a LISTO 
     public void addProcess(Proceso proceso) {
         proceso.setProcessState(Status.Ready);
-        C_Ready.encolar(proceso);
         
-        if (planificador != null) {
-            planificador.agregarProceso(proceso);
-        }
-    }
+        
+       if (planificador != null) {
+        planificador.agregarProceso(proceso);  
+    } else {
+        C_Ready.encolar(proceso); 
+    }}
     
 
    // Ready --> Running o Running --> Ready
@@ -95,13 +97,15 @@ public class ProcessManager {
              
 
         }
-      if (planificador != null) {
-                if (planificador instanceof RoundRobin) {
-                    ((RoundRobin) planificador).notificarBloqueo(CurrentRunning_Process);
-                } else if (planificador instanceof FCFS) {
-                    ((FCFS) planificador).liberarProcesoActual();
-                }
+ if (planificador != null) {
+            if (planificador instanceof Garantizado) {
+                ((Garantizado) planificador).notificarSalidaProceso(CurrentRunning_Process);
+            } else if (planificador instanceof RoundRobin) {
+                ((RoundRobin) planificador).notificarBloqueo(CurrentRunning_Process);
+            } else if (planificador instanceof FCFS) {
+                ((FCFS) planificador).liberarProcesoActual();
             }
+        }
 
         CurrentRunning_Process = null;
     }
@@ -121,8 +125,15 @@ public class ProcessManager {
     
     System.out.println("[DEBUG] unblockProcess - Proceso " + proceso.getName() + 
         " movido a Ready. Estado: " + proceso.getProcessState() );
+     if (planificador != null) {
+        planificador.agregarProceso(proceso);
+    }
+     if (planificadorGeneral != null) {
+    synchronized (planificadorGeneral) {
+        planificadorGeneral.notify();
+    }
        
-}
+}}
     
     // temporal
     public String debugEstadoCompleto() {
@@ -189,17 +200,15 @@ public class ProcessManager {
             CurrentRunning_Process.setProcessState(Status.Finished);
             C_finished.encolar(CurrentRunning_Process);
             
-            if (planificador != null && planificador instanceof RoundRobin) {
-                    ((RoundRobin) planificador).notificarFinalizacion(CurrentRunning_Process);}
-            
-        } else {
-            // Si no terminó, regresar a Ready
-            CurrentRunning_Process.setProcessState(Status.Ready);
-            C_Ready.encolar(CurrentRunning_Process);
-            
-        }
-        if (planificador != null && planificador instanceof FCFS) {
-            ((FCFS) planificador).liberarProcesoActual();
+            if (planificador != null) {
+                if (planificador instanceof Garantizado) {
+                    ((Garantizado) planificador).notificarSalidaProceso(CurrentRunning_Process);
+                } else if (planificador instanceof RoundRobin) {
+                    ((RoundRobin) planificador).notificarFinalizacion(CurrentRunning_Process);
+                } else if (planificador instanceof FCFS) {
+                    ((FCFS) planificador).liberarProcesoActual();
+                }
+            }
         }
         System.out.println("[DEBUG] CPU liberada por finalización");
         CurrentRunning_Process = null;
@@ -296,6 +305,9 @@ public String getEstadisticas() {
  public void setC_Ready(Cola nuevaCola) {
         this.C_Ready = nuevaCola;
     }
+ public void setPlanificadorGeneral(Simulacion.Planificador planificadorGeneral) {
+    this.planificadorGeneral = planificadorGeneral;
+}
 
 // Método para verificar si un proceso está en alguna cola
     public boolean contieneProceso(Proceso proceso) {

@@ -54,38 +54,36 @@ public Proceso obtenerSiguienteProceso() {
     try {
         semaforoCola.adquirir();
         
-        // DEBUG DETALLADO
-        System.out.println("[DEBUG RoundRobin] INICIO - Proceso actual: " + 
+        // DEBUG
+        System.out.println("[DEBUG RoundRobin] INICIO - Proceso: " + 
             (procesoActual != null ? procesoActual.getName() : "null") +
             ", Quantum: " + contadorQuantum + "/" + quantum +
             ", Estado: " + (procesoActual != null ? procesoActual.getProcessState() : "N/A"));
+
+        // SOLUCIÓN 1: Verificar preemption por quantum agotado
+        if (procesoActual != null && procesoActual.getProcessState() == Status.Running) {
+           if (contadorQuantum >= quantum) {
+        // preemption
+        procesoActual.setProcessState(Status.Ready);
+        processManager.getC_Ready().encolar(procesoActual);
+        procesoActual = null;
+        contadorQuantum = 0;
+    } else {
+        contadorQuantum++;
+        return procesoActual;
+    }
+}
         
-        // VERIFICAR SI EL PROCESO ACTUAL SIGUE SIENDO VÁLIDO
-        if (procesoActual != null) {
-            // Si el proceso está bloqueado, terminado o suspendido, limpiarlo
-            if (procesoActual.getProcessState() == Status.Blocked || 
-                procesoActual.getProcessState() == Status.Blocked_Suspended ||
-                procesoActual.End()) {
-                
-                System.out.println("[DEBUG RoundRobin] Proceso " + procesoActual.getName() + 
-                    " no está disponible (Estado: " + procesoActual.getProcessState() + ") - Limpiando");
-                procesoActual = null;
-                contadorQuantum = 0;
-            }
-            // Si el proceso está listo pero agotó el quantum, devolver a cola
-            else if (procesoActual.getProcessState() == Status.Ready && contadorQuantum >= quantum) {
-                System.out.println("[DEBUG RoundRobin] QUANTUM AGOTADO - Proceso " + procesoActual.getName() + 
-                    " devuelto a cola");
-                if (processManager != null && processManager.getC_Ready() != null) {
-                    processManager.getC_Ready().encolar(procesoActual);
-                }
-                logger.log(String.format("Quantum agotado - Proceso %s devuelto a cola", procesoActual.getName()));
-                procesoActual = null;
-                contadorQuantum = 0;
-            }
+
+        // SOLUCIÓN 2: Limpiar proceso no válido
+        if (procesoActual != null && 
+            (procesoActual.getProcessState() != Status.Running || procesoActual.End())) {
+            System.out.println("[DEBUG RoundRobin] Limpiando proceso no válido: " + procesoActual.getName());
+            procesoActual = null;
+            contadorQuantum = 0;
         }
-        
-        // SI NO HAY PROCESO ACTUAL VÁLIDO, BUSCAR NUEVO
+
+        // Buscar nuevo proceso
         if (procesoActual == null) {
             Proceso siguiente = null;
             if (processManager != null && processManager.getC_Ready() != null) {
@@ -95,25 +93,14 @@ public Proceso obtenerSiguienteProceso() {
             if (siguiente != null) {
                 siguiente.setProcessState(Status.Running);
                 procesoActual = siguiente;
-                contadorQuantum = 1; // Empezar nuevo quantum
-                System.out.println("[DEBUG RoundRobin] NUEVO PROCESO seleccionado: " + 
-                    siguiente.getName() + " (quantum: " + contadorQuantum + "/" + quantum + ")");
-                logger.log(String.format("Planificador Round Robin selecciona Proceso %s (Quantum %d)", 
-                    siguiente.getName(), quantum));
-            } else {
-                System.out.println("[DEBUG RoundRobin] No hay procesos disponibles en cola");
+                contadorQuantum = 1; // Reiniciar contador
+                System.out.println("[DEBUG RoundRobin] NUEVO PROCESO: " + siguiente.getName());
+                logger.log(String.format("Planificador Round Robin selecciona Proceso %s", siguiente.getName()));
             }
-        } 
-        // SI HAY PROCESO ACTUAL VÁLIDO, CONTINUAR EJECUTANDOLO
-        else if (procesoActual.getProcessState() == Status.Running) {
-            contadorQuantum++;
-            System.out.println("[DEBUG RoundRobin] CONTINUANDO con proceso: " + procesoActual.getName() + 
-                " (quantum: " + contadorQuantum + "/" + quantum + ")");
         }
         
         semaforoCola.liberar();
         return procesoActual;
-        
     } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         return null;

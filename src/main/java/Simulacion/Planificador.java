@@ -36,7 +36,11 @@ public class Planificador implements Runnable {
             semaforoCambio.adquirir();
             
             System.out.println("[DEBUG Planificador] Cambiando algoritmo a: " + nuevoAlgoritmo.getNombre());
-            
+            //establecer el planificador en ProcessManager
+            if (processManager != null) {
+            processManager.setPlanificador(nuevoAlgoritmo);
+            System.out.println("[DEBUG Planificador] Planificador establecido en ProcessManager");
+        }
             // Transferir procesos de la cola Ready del ProcessManager al nuevo algoritmo
             if (processManager != null && processManager.getC_Ready() != null) {
                 Cola colaReady = processManager.getC_Ready();
@@ -50,6 +54,7 @@ public class Planificador implements Runnable {
                         System.out.println("[DEBUG Planificador] Proceso transferido: " + p.getName());
                     }
                 }
+                processManager.setC_Ready(new Cola());
             }
             
             this.algoritmoActual = nuevoAlgoritmo;
@@ -78,14 +83,16 @@ public class Planificador implements Runnable {
         logger.log("Planificador detenido");
     }
     
-   @Override
+@Override
 public void run() {
     while (ejecutando && !Thread.currentThread().isInterrupted()) {
         try {
-            // ESPERAR antes de verificar de nuevo
-            Thread.sleep(Clock.getInstance().getCycleDuration() / 2);
-            
-         //SOLO seleccionar nuevo proceso si la CPU está libre
+            synchronized (this) {
+                // ? Esperar notificación o timeout (para ciclos normales)
+                this.wait(Clock.getInstance().getCycleDuration() / 2);
+            }
+
+            // Solo planificar si la CPU está libre
             if (cpu.getProcesoActual() == null) {
                 Proceso siguienteProceso = algoritmoActual.obtenerSiguienteProceso();
                 if (siguienteProceso != null) {
@@ -93,6 +100,7 @@ public void run() {
                         Clock.getInstance().getCurrentCycle(),
                         algoritmoActual.getNombre(),
                         siguienteProceso.getName()));
+
                     cpu.ejecutarProceso(siguienteProceso);
                 }
             }
@@ -102,6 +110,8 @@ public void run() {
         }
     }
 }
+
+
 
     public void agregarProceso(Proceso proceso) {
         algoritmoActual.agregarProceso(proceso);

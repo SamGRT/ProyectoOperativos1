@@ -3,6 +3,8 @@ package Planificacion;
 import model.Proceso;
 import model.Status;
 import Edd.Cola;
+import Simulacion.Clock;
+import Simulacion.ProcessManager;
 import utils.Logger;
 import utils.Semaforo;
 
@@ -18,7 +20,7 @@ public class MultiplesColas implements AlgoritmoPlanificacion {
     private int quantumBase;
     private int contadorQuantum;
     
-    public MultiplesColas() {
+    public MultiplesColas(ProcessManager processManager) {
         this.colas = new Cola[3]; // 3 colas con diferentes prioridades
         for (int i = 0; i < colas.length; i++) {
             colas[i] = new Cola();
@@ -27,8 +29,10 @@ public class MultiplesColas implements AlgoritmoPlanificacion {
         this.logger = Logger.getInstancia();
         this.quantumBase = 2;
         this.contadorQuantum = 0;
+        
+        
     }
-    
+
     @Override
     public void agregarProceso(Proceso proceso) {
         try {
@@ -52,7 +56,14 @@ public class MultiplesColas implements AlgoritmoPlanificacion {
     public Proceso obtenerSiguienteProceso() {
         try {
             semaforoCola.adquirir();
-            
+            System.out.println("=== DEBUG MULTIPLES COLAS - obtenerSiguienteProceso() ===");
+        System.out.println("Ciclo: " + Clock.getInstance().getCurrentCycle());
+        for (int i = 0; i < colas.length; i++) {
+            System.out.println("Cola " + i + ": " + colas[i].size() + " procesos");
+        }
+        System.out.println("Proceso actual: " + (procesoActual != null ? procesoActual.getName() : "NULL"));
+        System.out.println("Contador quantum: " + contadorQuantum + "/" + getQuantumActual());
+        System.out.println("=== FIN DEBUG ===");
             // Si hay proceso actual y no ha consumido su quantum, continuar
             if (procesoActual != null && !procesoActual.End() && contadorQuantum < getQuantumActual()) {
                 contadorQuantum++;
@@ -105,12 +116,18 @@ public class MultiplesColas implements AlgoritmoPlanificacion {
     public Cola getColaListos() {
         Cola combinada = new Cola();
         for (Cola cola : colas) {
-            for (int i = 0; i < cola.size(); i++) {
-                combinada.encolar(cola.get(i));
+            if (cola != null) {
+                for (int i = 0; i < cola.size(); i++) {
+                    Proceso p = cola.get(i);
+                    if (p != null) {
+                        combinada.encolar(p);
+                    }
+                }
             }
         }
         return combinada;
     }
+
     
     @Override
     public String getNombre() {
