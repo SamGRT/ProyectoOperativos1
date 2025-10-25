@@ -151,7 +151,7 @@ public class mainWindow extends javax.swing.JFrame {
          javax.swing.JTabbedPane chartsTabbedPane = new javax.swing.JTabbedPane();
          
          throughputChart = new SimpleChartPanel("Throughput", java.awt.Color.BLUE);
-         utilizacionChart = new SimpleChartPanel("Utilización CPU", java.awt.Color.GREEN);
+         utilizacionChart = new SimpleChartPanel("Utilizacion CPU", java.awt.Color.GREEN);
          equidadChart = new SimpleChartPanel("Equidad", java.awt.Color.ORANGE);
          tiempoRespuestaChart = new SimpleChartPanel("Tiempo Respuesta", java.awt.Color.RED);
          
@@ -388,21 +388,21 @@ public class mainWindow extends javax.swing.JFrame {
             MetricsCalculator.MetricData metricas = metricsCalculator.getMetricasActuales();
 
             // Actualizar labels
-            throughputLabel.setText(String.format("Throughput: %.2f proc/seg", metricas.throughput));
+            throughputLabel.setText(String.format("Throughput: %.3f proc/ciclo", metricas.throughput));
             utilizacionLabel.setText(String.format("Utilización CPU: %.1f%%", metricas.utilizacionCPU));
             equidadLabel.setText(String.format("Equidad: %.1f%%", metricas.equidad));
-            tiempoRespuestaLabel.setText(String.format("Tiempo Respuesta: %.1f ciclos", metricas.tiempoRespuestaPromedio));
+            tiempoRespuestaLabel.setText(String.format("Tiempo de Respuesta: %.1f ciclos", metricas.tiempoRespuestaPromedio));
 
             // Actualizar área de texto con historial usando ListaEnlazada
             StringBuilder sb = new StringBuilder();
             sb.append("Ciclo\tThroughput\tUtilización\tEquidad\tT. Respuesta\n");
             sb.append("------------------------------------------------------------\n");
 
-            ListaEnlazada historial = metricsCalculator.getUltimasMetricas(20); // Últimos 20 registros
+            ListaEnlazada historial = metricsCalculator.getUltimasMetricas(50); // Últimos 50 registros
 
             for (int i = 0; i < historial.tamaño(); i++) {
                 MetricsCalculator.MetricData data = (MetricsCalculator.MetricData) historial.obtener(i);
-                sb.append(String.format("%d\t%.2f\t%.1f%%\t%.1f%%\t%.1f\n", 
+                sb.append(String.format("%d\t%.3f\t%.1f%%\t%.1f%%\t%.1f\n", 
                     data.ciclo, data.throughput, data.utilizacionCPU, data.equidad, data.tiempoRespuestaPromedio));
             }
 

@@ -83,6 +83,11 @@ public void run() {
         try {
             Clock.getInstance().incrementCycle();
             semaforoCPU.adquirir();
+            
+            boolean cpuOcupada = (procesoActual != null);
+            if (processManager != null) {
+                processManager.incrementarCicloCPU(cpuOcupada);
+            }
 
             if (procesoActual != null && processManager != null) {
                 // Verificar estado ANTES de ejecutar

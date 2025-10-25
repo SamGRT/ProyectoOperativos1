@@ -13,8 +13,8 @@ import Edd.ListaEnlazada;
 public class MetricsCalculator {
     private ProcessManager processManager;
     private ListaEnlazada historialMetricas;
-    private long tiempoInicio;
-    private int procesosCompletadosAcumulados;
+    private int ultimoCiclo;
+    private int procesosCompletadosUltimoCiclo;
     
     //Clase interna para datos históricos
     public static class MetricData {
@@ -43,12 +43,16 @@ public class MetricsCalculator {
     public MetricsCalculator(ProcessManager processManager) {
         this.processManager = processManager;
         this.historialMetricas = new ListaEnlazada();
-        this.tiempoInicio = System.currentTimeMillis();
-        this.procesosCompletadosAcumulados = 0;
+        this.ultimoCiclo = 0;
+        this.procesosCompletadosUltimoCiclo = 0;
     }
     
     public void capturarMetricas() {
         int cicloActual = Clock.getInstance().getCurrentCycle();
+        
+        if(cicloActual <= ultimoCiclo) {
+            return;
+        }
         
         double throughput = calcularThroughput();
         double utilizacionCPU = calcularUtilizacionCPU();
@@ -67,27 +71,15 @@ public class MetricsCalculator {
     }
     
     public double calcularThroughput() {
-        long tiempoTranscurrido = (System.currentTimeMillis() - tiempoInicio) / 1000;
-        if (tiempoTranscurrido == 0) return 0;
+        long ciclosTotales = Clock.getInstance().getCurrentCycle();
+        if (ciclosTotales == 0) return 0;
         
         int procesosCompletados = processManager.getC_finished().size();
-        return(double) procesosCompletados / tiempoTranscurrido;
+        return(double) procesosCompletados / ciclosTotales;
     }
     
     public double calcularUtilizacionCPU() {
-        int ciclosTotales = Clock.getInstance().getCurrentCycle();
-        if (ciclosTotales == 0) return 0;
-        
-        //Contar cuántas ciclos estuvo ocupada la CPU
-        int ciclosOcupados = 0;
-        for (int i = 0; i < historialMetricas.tamaño(); i++) {
-            MetricData data = (MetricData) historialMetricas.obtener(i);
-            if (data.utilizacionCPU > 50.0) { //Si estuvo más del 50% ocupada
-                ciclosOcupados++;
-            }
-        }
-        
-        return (double) ciclosOcupados / ciclosTotales * 100;
+        return processManager.getPorcentajeUtilizacionCPU();
     }
     
     public double calcularEquidad() {
@@ -152,7 +144,7 @@ public class MetricsCalculator {
         int totalMetricas = historialMetricas.tamaño();
         int inicio = Math.max(0, totalMetricas - cantidad);
         
-        for (int i = 0; i < totalMetricas; i++) {
+        for (int i = inicio; i < totalMetricas; i++) {
             ultimas.agregar(historialMetricas.obtener(i));
         }
         
@@ -176,7 +168,10 @@ public class MetricsCalculator {
     
     public void reiniciar() {
         historialMetricas.limpiar();
-        tiempoInicio = System.currentTimeMillis();
-        procesosCompletadosAcumulados = 0;
+        ultimoCiclo = 0;
+        procesosCompletadosUltimoCiclo = 0;
+        if (processManager != null) {
+            processManager.reiniciarEstadisticasCPU();
+        }
     }
 }
