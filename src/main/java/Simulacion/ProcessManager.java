@@ -46,6 +46,10 @@ public class ProcessManager {
         this.C_finished = new Cola();
         this.CurrentRunning_Process = null;
         this.planificador = planificador;
+        
+        if (planificador != null) {
+            planificador.setColaExterna(this.C_Ready);
+        }
     }
     
     // Agregar nuevo proceso al sistema a LISTO 
@@ -58,32 +62,25 @@ public class ProcessManager {
         }
     }
     
-    //Método específico para enviar al planificador
-    public void enviarAlPlanificador(Proceso proceso) {
-        if (planificador != null) {
-            proceso.setProcessState(Status.Ready);
-            planificador.agregarProceso(proceso);
-            if (!C_Ready.contiene(proceso)) {
-                C_Ready.encolar(proceso);
-            }
-        }
-    }
-    
+
    // Ready --> Running o Running --> Ready
-    public void setRunningProcess(Proceso proceso) {
+   public void setRunningProcess(Proceso proceso) {
+    // Si hay un proceso ejecutándose actualmente, moverlo a Ready
     if (CurrentRunning_Process != null && CurrentRunning_Process != proceso) {
-        
-        if (CurrentRunning_Process.getProcessState() == Status.Running) {
+        if (!CurrentRunning_Process.End()) { // Solo si no ha terminado
             CurrentRunning_Process.setProcessState(Status.Ready);
             if (!C_Ready.contiene(CurrentRunning_Process)) {
                 C_Ready.encolar(CurrentRunning_Process);
-            }
+            } 
+            
+            
         }
     }
     
-    if (proceso != null) {
+    // Establecer nuevo proceso en ejecución
+    if (proceso != null && !proceso.End()) {
         proceso.setProcessState(Status.Running);
-        C_Ready.remove(proceso); 
+        C_Ready.remove(proceso); // Remover de ready
     }
     CurrentRunning_Process = proceso;
 }
@@ -91,13 +88,18 @@ public class ProcessManager {
     // Running --> BLocked
    public void BlockCurrentProcess(){
     if (CurrentRunning_Process != null) {
-        
+        System.out.println("[DEBUG] Bloqueando proceso: " + CurrentRunning_Process.getName());
+        CurrentRunning_Process.setProcessState(Status.Blocked);
         if (!C_Blocked.contiene(CurrentRunning_Process)) {
-            CurrentRunning_Process.setProcessState(Status.Blocked);
+           
             C_Blocked.encolar(CurrentRunning_Process);
              
 
         }
+        if (planificador != null && planificador instanceof FCFS) {
+            ((FCFS) planificador).liberarProcesoActual();
+        }
+
         CurrentRunning_Process = null;
     }
 }
@@ -183,7 +185,7 @@ public class ProcessManager {
     //END process (Running --> Finished)
     public void EndProcess(){
     if (CurrentRunning_Process != null) {
-        
+        System.out.println("[DEBUG] Finalizando proceso: " + CurrentRunning_Process.getName());
         if (CurrentRunning_Process.End()) {
             CurrentRunning_Process.setProcessState(Status.Finished);
             C_finished.encolar(CurrentRunning_Process);
@@ -194,6 +196,10 @@ public class ProcessManager {
             C_Ready.encolar(CurrentRunning_Process);
             
         }
+        if (planificador != null && planificador instanceof FCFS) {
+            ((FCFS) planificador).liberarProcesoActual();
+        }
+        System.out.println("[DEBUG] CPU liberada por finalización");
         CurrentRunning_Process = null;
     }
 }
@@ -270,6 +276,10 @@ public class ProcessManager {
     // Setter para el planificador
     public void setPlanificador(AlgoritmoPlanificacion planificador) {
         this.planificador = planificador;
+        // Conectar la cola con el planificador
+        if (planificador instanceof FCFS) {
+            ((FCFS) planificador).setColaExterna(this.C_Ready);
+        }
     }
     
     // Método para obtener estadísticas básicas

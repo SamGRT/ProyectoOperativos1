@@ -10,7 +10,7 @@ import model.Status;
  * @author sarazo
  */
 public class ExceptionHandler implements Runnable {
-    private Cola colaBloqueados;
+    
     private Semaforo semaforoCola;
     private Logger logger;
     private boolean ejecutando;
@@ -18,7 +18,7 @@ public class ExceptionHandler implements Runnable {
     private ProcessManager processManager;
             
     public ExceptionHandler(ProcessManager processManager) {
-        this.colaBloqueados = processManager.getC_Blocked();
+        
         this.semaforoCola  = new Semaforo(1);
         this.logger = Logger.getInstancia();
         this.ejecutando = false;
@@ -51,7 +51,7 @@ public class ExceptionHandler implements Runnable {
                     logger.log(String.format("ADVERTENCIA: Proceso %s tiene ciclos pendientes = %d", proceso.getName(), proceso.getCiclosPendientes()));
                 }
                 proceso.setProcessState(Status.Blocked);
-                colaBloqueados.encolar(proceso);
+                
                 logger.log(String.format("EXCEPCION I/O: Proceso %s bloqueado por E/S (Duración: %d ciclos)", proceso.getName(), proceso.getCiclosPendientes()));
             }
             
@@ -79,15 +79,22 @@ public class ExceptionHandler implements Runnable {
         try {
             semaforoCola.adquirir();
             
-            if (!colaBloqueados.isEmpty()) {
-                logger.log(String.format("Procesando E/S: %d procesos en cola de bloqueados", 
-                    colaBloqueados.size()));
+            // Obtener la cola actual de bloqueados del ProcessManager
+            Cola colaBloqueados = processManager.getC_Blocked();
+            
+            if (colaBloqueados != null && !colaBloqueados.isEmpty()) {
+                logger.log(String.format("[Ciclo %d] Procesando E/S: %d procesos en cola de bloqueados", 
+                    Clock.getInstance().getCurrentCycle(), colaBloqueados.size()));
                 
-                Cola nuevaCola = new Cola();
                 int procesosProcesados = 0;
                 int procesosDesbloqueados = 0;
+                int procesosAunBloqueados = 0;
                 
-                while (!colaBloqueados.isEmpty()) {
+                // Estrategia: Procesar cada elemento y volver a encolar solo los que siguen bloqueados
+                // Usamos un contador para saber cuántos procesos procesar en esta iteración
+                int procesosAProcesar = colaBloqueados.size();
+                
+                for (int i = 0; i < procesosAProcesar; i++) {
                     Proceso proceso = colaBloqueados.desencolar();
                     if (proceso != null) {
                         procesosProcesados++;
@@ -95,23 +102,21 @@ public class ExceptionHandler implements Runnable {
                         
                         if (!eSCompletada) {
                             // E/S aún en progreso, volver a encolar
-                            nuevaCola.encolar(proceso);
-                            logger.log(String.format("E/S en progreso: %s - Ciclos restantes: %d", 
-                                proceso.getName(), proceso.getCiclosPendientes()));
+                            colaBloqueados.encolar(proceso);
+                            procesosAunBloqueados++;
+                            logger.log(String.format("[Ciclo %d] E/S en progreso: %s - Ciclos restantes: %d", 
+                                Clock.getInstance().getCurrentCycle(), proceso.getName(), proceso.getCiclosPendientes()));
                         } else {
-                            // E/S completada - ya fue a ready por unblock process
-                           procesosDesbloqueados++;
-                            logger.log(String.format("E/S COMPLETADA: Proceso %s listo para continuar", 
-                            proceso.getName()));
+                            // E/S completada - ya fue movido a Ready por processManager.unblockProcess()
+                            procesosDesbloqueados++;
+                            logger.log(String.format("[Ciclo %d] E/S COMPLETADA: Proceso %s listo para continuar", 
+                                Clock.getInstance().getCurrentCycle(), proceso.getName()));
                         }
                     }
                 }
                 
-            
-                
-                
-                logger.log(String.format("E/S procesadas: %d procesos, %d aún bloqueados", 
-                    procesosProcesados, procesosDesbloqueados, colaBloqueados.size()));
+                logger.log(String.format("[Ciclo %d] E/S procesadas: %d procesos, %d desbloqueados, %d aún bloqueados", 
+                    Clock.getInstance().getCurrentCycle(), procesosProcesados, procesosDesbloqueados, procesosAunBloqueados));
             }
             
             semaforoCola.liberar();
@@ -120,20 +125,22 @@ public class ExceptionHandler implements Runnable {
         }
     }
     
- private boolean procesarCicloES(Proceso proceso) {
+    private boolean procesarCicloES(Proceso proceso) {
         if (proceso.getCiclosPendientes() > 0) {
-            proceso.setCiclosPendientes(proceso.getCiclosPendientes() - 1);
+            // Decrementar contador de E/S
+            int nuevosCiclos = proceso.getCiclosPendientes() - 1;
+            proceso.setCiclosPendientes(nuevosCiclos);
             
-            if (proceso.getCiclosPendientes() <= 0) {
-              //  E/S COMPLETADA - mover de vuelta a Ready
-                if (processManager != null) {
-                    processManager.unblockProcess(proceso);
-                }
-                return true;
+            // Verificar si la E/S ha terminado
+            if (nuevosCiclos <= 0) {
+                // IMPORTANTE: Llamar a unblockProcess para mover el proceso a Ready
+                processManager.unblockProcess(proceso);
+                proceso.resetAfterIO(); 
+                return true; // E/S completada
             }
-            return false;
+            return false; // E/S aún en progreso
         }
-        return true;
+        return true; // No hay E/S pendientes
     }
 
     
@@ -141,12 +148,10 @@ public class ExceptionHandler implements Runnable {
         logger.log(String.format("PROCESO LISTO: %s disponible para planificación", proceso.getName()));
     }
     
-    public Cola getColaBloqueados() {
-        return colaBloqueados;
-    }
+ 
     
     public int getProcesosBloqueados() {
-        return colaBloqueados.size();
+        return processManager.getC_Blocked().size();
     }
     
     public boolean isEjecutando() {

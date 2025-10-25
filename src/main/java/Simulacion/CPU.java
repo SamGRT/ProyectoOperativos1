@@ -82,18 +82,19 @@ public void run() {
             semaforoCPU.adquirir();
 
             if (procesoActual != null && processManager != null) {
-                // Verificar estado antes de ejecutar
-                if (procesoActual.End() || procesoActual.getProcessState() == Status.Blocked) {
-                    logger.log(String.format("Proceso %s en estado inválido (%s) - Liberando CPU", 
-                        procesoActual.getName(), 
-                        procesoActual.End() ? "TERMINADO" : "BLOQUEADO"));
+                // Verificar estado ANTES de ejecutar
+                if (procesoActual.getProcessState() != Status.Running || procesoActual.End()) {
+                    logger.log(String.format("CPU: Proceso %s no está listo para ejecutar (Estado: %s) - Liberando", 
+                        procesoActual.getName(), procesoActual.getProcessState()));
                     
                     if (procesoActual.End()) {
                         processManager.EndProcess();
+                    } else if (procesoActual.getProcessState() == Status.Blocked) {
+                        // Ya debería estar en cola de bloqueados, solo limpiar
+                        processManager.setRunningProcess(null);
                     }
-                    procesoActual = null;
-                    processManager.setRunningProcess(null);
                     
+                    procesoActual = null;
                     semaforoCPU.liberar();
                     continue;
                 }
@@ -103,7 +104,8 @@ public void run() {
                 ciclosReloj++;
 
                 if (instruccionEjecutada) {
-                    logger.log(String.format("Proceso %s - PC: %d/%d - MAR: %d",
+                    logger.log(String.format("[Ciclo %d] Proceso %s - PC: %d/%d - MAR: %d",
+                            Clock.getInstance().getCurrentCycle(),
                             procesoActual.getName(),
                             procesoActual.getPC(),
                             procesoActual.getTotal_Instructions(),
@@ -111,18 +113,21 @@ public void run() {
 
                     // Verificar si terminó después de ejecutar
                     if (procesoActual.End()) {
-                        logger.log(String.format("Proceso %s COMPLETADO", procesoActual.getName()));
+                        logger.log(String.format("[Ciclo %d] Proceso %s COMPLETADO", 
+                            Clock.getInstance().getCurrentCycle(), procesoActual.getName()));
                         processManager.EndProcess();
                         procesoActual = null;
-                        processManager.setRunningProcess(null);
                     } 
                     // Verificar excepción I/O
                     else if (procesoActual.generate_EXC()) {
-                        logger.log(String.format("¡EXCEPCIÓN I/O! Proceso %s solicita E/S", 
-                            procesoActual.getName()));
+                        logger.log(String.format("[Ciclo %d] ¡EXCEPCIÓN I/O! Proceso %s solicita E/S", 
+                            Clock.getInstance().getCurrentCycle(), procesoActual.getName()));
+                        
+                        // IMPORTANTE: Configurar los ciclos de E/S antes de bloquear
+                        procesoActual.setCiclosPendientes(procesoActual.getCiclosPendientes());
+                        
                         processManager.BlockCurrentProcess();
                         procesoActual = null;
-                        processManager.setRunningProcess(null);
                     }
                 }
             }

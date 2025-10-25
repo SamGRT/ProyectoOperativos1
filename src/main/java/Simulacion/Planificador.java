@@ -17,6 +17,7 @@ public class Planificador implements Runnable {
     private Thread hiloPlanificador;
     private Logger logger;
     private Semaforo semaforoCambio;
+    private ProcessManager processManager; 
     
     public Planificador(CPU cpu, ProcessManager processManager) {
         this.algoritmoActual = new FCFS(); // Por defecto FCFS
@@ -24,6 +25,11 @@ public class Planificador implements Runnable {
         this.ejecutando = false;
         this.logger = Logger.getInstancia();
         this.semaforoCambio = new Semaforo(1);
+        this.processManager = processManager;
+        
+         if (processManager != null && algoritmoActual instanceof FCFS) {
+            ((FCFS) algoritmoActual).setColaExterna(processManager.getC_Ready());
+        }
     }
     
     public void cambiarAlgoritmo(AlgoritmoPlanificacion nuevoAlgoritmo) {

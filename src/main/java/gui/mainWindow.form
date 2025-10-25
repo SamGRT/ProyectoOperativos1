@@ -746,7 +746,7 @@
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                           <Font name="Segoe UI Black" size="10" style="1"/>
                         </Property>
-                        <Property name="text" type="java.lang.String" value="COLA SUSPENDIDOS/LISTOS"/>
+                        <Property name="text" type="java.lang.String" value="COLA TERMINADOS"/>
                       </Properties>
                       <Constraints>
                         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
@@ -802,7 +802,7 @@
                         </Constraint>
                       </Constraints>
                     </Component>
-                    <Container class="javax.swing.JScrollPane" name="Cola_SuspReady">
+                    <Container class="javax.swing.JScrollPane" name="Cola_Finished">
                       <Constraints>
                         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
                           <AbsoluteConstraints x="60" y="570" width="930" height="160"/>
