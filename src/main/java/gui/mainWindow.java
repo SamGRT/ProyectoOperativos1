@@ -485,7 +485,7 @@ public class mainWindow extends javax.swing.JFrame {
                     nuevoAlgoritmo = new FCFS(processManager);
                     break;
                 case "SJF":
-                    nuevoAlgoritmo = new SJF();
+                    nuevoAlgoritmo = new SJF(processManager);
                     break;
                 case "Prioridades":
                     nuevoAlgoritmo = new Prioridades();

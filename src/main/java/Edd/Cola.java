@@ -93,7 +93,16 @@ public class Cola {
                 return;
             }
         }
+        
+      
     }
+    
+    public void vaciar() {
+    for (int i = 0; i < size; i++) {
+        procesos[i] = null;
+    }
+    size = 0;
+}
     
     @Override
     public String toString() {

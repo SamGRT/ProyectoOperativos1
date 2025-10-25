@@ -308,6 +308,9 @@ public String getEstadisticas() {
             (CurrentRunning_Process != null ? CurrentRunning_Process.getName() : "Ninguno")
         );
     }
+ public void setC_Ready(Cola nuevaCola) {
+        this.C_Ready = nuevaCola;
+    }
 
 // Método para verificar si un proceso está en alguna cola
     public boolean contieneProceso(Proceso proceso) {
