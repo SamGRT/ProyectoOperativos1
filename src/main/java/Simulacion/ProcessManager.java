@@ -139,22 +139,7 @@ public class ProcessManager {
     sb.append("=== FIN DEBUG ===");
     return sb.toString();
 }
-   public String debugEstadoProcesos() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("=== DEBUG ESTADO PROCESOS ===\n");
-    sb.append("Ready: ").append(C_Ready.size()).append("\n");
-    for (int i = 0; i < C_Ready.size(); i++) {
-        Proceso p = C_Ready.get(i);
-        sb.append("  ").append(p.getName()).append(" - Estado: ").append(p.getProcessState()).append("\n");
-    }
-    sb.append("Blocked: ").append(C_Blocked.size()).append("\n");
-    for (int i = 0; i < C_Blocked.size(); i++) {
-        Proceso p = C_Blocked.get(i);
-        sb.append("  ").append(p.getName()).append(" - Estado: ").append(p.getProcessState()).append("\n");
-    }
-    sb.append("=======================\n");
-    return sb.toString();
-} 
+
  //Ready --> Suspended_Ready (por falta de memoria)
     public void SuspendReadyProcess(Proceso proceso){
         if (C_Ready.contiene(proceso)) {

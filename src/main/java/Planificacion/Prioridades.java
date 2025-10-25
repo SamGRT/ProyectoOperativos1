@@ -3,6 +3,7 @@ package Planificacion;
 import model.Proceso;
 import model.Status;
 import Edd.Cola;
+import Simulacion.ProcessManager;
 import utils.Logger;
 import utils.Semaforo;
 
@@ -11,13 +12,13 @@ import utils.Semaforo;
  * @author sarazo
  */
 public class Prioridades implements AlgoritmoPlanificacion {
-    private Cola colaListos;
+    private ProcessManager processManager;
     private Proceso procesoActual;
     private Semaforo semaforoCola;
     private Logger logger;
     
-    public Prioridades() {
-        this.colaListos = new Cola();
+    public Prioridades(ProcessManager processManager) {
+        this.processManager = processManager;
         this.semaforoCola = new Semaforo(1);
         this.logger = Logger.getInstancia();
     }
@@ -32,8 +33,8 @@ public class Prioridades implements AlgoritmoPlanificacion {
             int prioridad = asignarPrioridad(proceso);
             
             int index = 0;
-            while (index < colaListos.size()) {
-                Proceso p = colaListos.get(index);
+            while (index <processManager.getC_Ready().size()) {
+                Proceso p = processManager.getC_Ready().get(index);
                 int prioridadP = asignarPrioridad(p);
                 if (prioridad < prioridadP) { // Números más bajos = mayor prioridad
                     break;
@@ -66,51 +67,60 @@ public class Prioridades implements AlgoritmoPlanificacion {
         return prioridad;
     }
     
-    private void insertarEnPosicion(Proceso proceso, int index) {
-        if (colaListos.size() == 0) {
-            colaListos.encolar(proceso);
-            return;
+private void insertarEnPosicion(Proceso proceso, int index) {
+    Cola colaListos = processManager.getC_Ready();
+    Cola nuevaCola = new Cola();
+    
+    for (int i = 0; i < index; i++) {
+        nuevaCola.encolar(colaListos.get(i));
+    }
+    nuevaCola.encolar(proceso);
+    for (int i = index; i < colaListos.size(); i++) {
+        nuevaCola.encolar(colaListos.get(i));
+    }
+    
+    processManager.setC_Ready(nuevaCola);
+}
+    
+    @Override
+public Proceso obtenerSiguienteProceso() {
+    try {
+        semaforoCola.adquirir();
+        
+        // Si hay un proceso actual que aún puede ejecutarse, mantenerlo
+        if (procesoActual != null && procesoActual.getProcessState() == Status.Running && !procesoActual.End()) {
+            semaforoCola.liberar();
+            return procesoActual;
         }
         
-        Cola nuevaCola = new Cola();
-        for (int i = 0; i < index; i++) {
-            nuevaCola.encolar(colaListos.get(i));
+        // Buscar siguiente proceso de mayor prioridad
+        Proceso siguiente = processManager.getC_Ready().desencolar();
+        if (siguiente != null) {
+            siguiente.setProcessState(Status.Running);
+            logger.log(String.format("Planificador Prioridades selecciona Proceso %s (Prioridad: %d)", 
+                siguiente.getName(), asignarPrioridad(siguiente)));
         }
-        nuevaCola.encolar(proceso);
-        for (int i = index; i < colaListos.size(); i++) {
-            nuevaCola.encolar(colaListos.get(i));
-        }
-        this.colaListos = nuevaCola;
+        
+        procesoActual = siguiente;
+        semaforoCola.liberar();
+        return siguiente;
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return null;
     }
-    
-    @Override
-    public Proceso obtenerSiguienteProceso() {
-        try {
-            semaforoCola.adquirir();
-            
-            if (procesoActual != null && !procesoActual.End()) {
-                semaforoCola.liberar();
-                return procesoActual;
-            }
-            
-            Proceso siguiente = colaListos.desencolar();
-            if (siguiente != null) {
-                siguiente.setProcessState(Status.Running);
-                logger.log(String.format("Planificador Prioridades selecciona Proceso %s (Prioridad: %d)", 
-                    siguiente.getName(), asignarPrioridad(siguiente)));
-            }
-            procesoActual = siguiente;
-            semaforoCola.liberar();
-            return siguiente;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return null;
-        }
+}
+    public void liberarProcesoActual() {
+    try {
+        semaforoCola.adquirir();
+        procesoActual = null;
+        semaforoCola.liberar();
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
     }
-    
+}
     @Override
     public Cola getColaListos() {
-        return colaListos;
+        return processManager != null ? processManager.getC_Ready() : null;
     }
     
     @Override

@@ -232,7 +232,7 @@ public class mainWindow extends javax.swing.JFrame {
       
       private void updateGUI() {
         // Actualizar colas de procesos
-       System.out.println(processManager.debugEstadoProcesos());
+       
         System.out.println(processManager.debugEstadoCompleto());
         updateReadyC();
         updateBlockedC();
@@ -488,7 +488,7 @@ public class mainWindow extends javax.swing.JFrame {
                     nuevoAlgoritmo = new SJF(processManager);
                     break;
                 case "Prioridades":
-                    nuevoAlgoritmo = new Prioridades();
+                    nuevoAlgoritmo = new Prioridades(processManager);
                     break;
                 case  "Garantizado":
                     nuevoAlgoritmo = new Garantizado();
