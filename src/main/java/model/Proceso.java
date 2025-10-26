@@ -22,7 +22,7 @@ public class Proceso {
     private int ciclos_ejecutados; 
     private int ciclosDesdeUltimaExcepcion;
     private static int nextId = 0;  // Generador de IDs únicos
-
+    private int memoriaAsignada;
     /*Lo que coloca el user**/
 
     public Proceso( String name, int Total_Instructions, boolean isCPUbound, int ciclosParaExcepcion, int ciclosPendientes) {
@@ -131,7 +131,11 @@ public class Proceso {
     ciclosDesdeUltimaExcepcion++;
     return true;
 }
-    
+     public int getMemoriaAsignada() {
+         return memoriaAsignada; }
+     
+    public void setMemoriaAsignada(int memoria) { 
+        this.memoriaAsignada = memoria; }
     @Override
     public String toString() {
         return String.format("Process[%s: %s, PC=%d, State=%s]", id, name, PC, ProcessState);

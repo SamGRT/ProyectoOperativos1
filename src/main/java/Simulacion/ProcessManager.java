@@ -29,7 +29,8 @@ public class ProcessManager {
     private Proceso CurrentRunning_Process;
     private AlgoritmoPlanificacion planificador;
     private Simulacion.Planificador planificadorGeneral;
-
+    private MemoryManager memoryManager;
+    
     public ProcessManager() {
         this.C_Ready = new Cola();
         this.C_Blocked = new Cola();
@@ -38,6 +39,7 @@ public class ProcessManager {
         this.C_finished =new Cola();
         this.CurrentRunning_Process =null;
         this.planificador = null;
+        this.memoryManager = new MemoryManager(this, 100); // 100 MB total
        
     }
     
@@ -61,14 +63,21 @@ public class ProcessManager {
     
     // Agregar nuevo proceso al sistema a LISTO 
     public void addProcess(Proceso proceso) {
-        proceso.setProcessState(Status.Ready);
-        
-        
-       if (planificador != null) {
-        planificador.agregarProceso(proceso);  
-    } else {
-        C_Ready.encolar(proceso); 
-    }}
+       if (memoryManager.asignarMemoria(proceso)) {
+            proceso.setProcessState(Status.Ready);
+            if (planificador != null) {
+                planificador.agregarProceso(proceso);  
+            } else {
+                C_Ready.encolar(proceso); 
+            }
+            System.out.println("[MEMORY] Proceso " + proceso.getName() + " asignado en memoria");
+        } else {
+            // Si no hay memoria, suspender inmediatamente
+            proceso.setProcessState(Status.Ready_Suspended);
+            C_Suspended_Ready.encolar(proceso);
+            System.out.println("[MEMORY] Proceso " + proceso.getName() + " suspendido por falta de memoria");
+        }
+    }
     
 
    // Ready --> Running o Running --> Ready
@@ -147,20 +156,23 @@ public class ProcessManager {
 }}
     
     // temporal
-    public String debugEstadoCompleto() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("=== DEBUG COMPLETO DEL SISTEMA ===\n");
-    sb.append("Reloj: ").append(Clock.getInstance().getCurrentCycle()).append("\n");
-    sb.append("CPU ejecutando: ").append(CurrentRunning_Process != null ? CurrentRunning_Process.getName() : "NULL").append("\n");
-    sb.append("Proceso en CPU: ").append(CurrentRunning_Process != null ? CurrentRunning_Process.getName() : "NULL").append("\n");
-    sb.append("Cola Ready: ").append(C_Ready.size()).append(" procesos\n");
-    sb.append("Cola Blocked: ").append(C_Blocked.size()).append(" procesos\n");
-    sb.append("Cola Suspended_Ready: ").append(C_Suspended_Ready.size()).append(" procesos\n");
-    sb.append("Cola Suspended_Blocked: ").append(C_Suspended_Blocked.size()).append(" procesos\n");
-    sb.append("Cola Finished: ").append(C_finished.size()).append(" procesos\n");
-    sb.append("=== FIN DEBUG ===");
-    return sb.toString();
-}
+  public String debugEstadoCompleto() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== DEBUG COMPLETO DEL SISTEMA ===\n");
+        sb.append("Reloj: ").append(Clock.getInstance().getCurrentCycle()).append("\n");
+        sb.append("CPU ejecutando: ").append(CurrentRunning_Process != null ? CurrentRunning_Process.getName() : "NULL").append("\n");
+        sb.append("Memoria: ").append(memoryManager.getMemoriaDisponible()).append("/")
+          .append(memoryManager.getMemoriaTotal()).append(" MB (")
+          .append(String.format("%.1f", memoryManager.getPorcentajeMemoriaDisponible())).append("%)\n");
+        sb.append("Cola Ready: ").append(C_Ready.size()).append(" procesos\n");
+        sb.append("Cola Blocked: ").append(C_Blocked.size()).append(" procesos\n");
+        sb.append("Cola Suspended_Ready: ").append(C_Suspended_Ready.size()).append(" procesos\n");
+        sb.append("Cola Suspended_Blocked: ").append(C_Suspended_Blocked.size()).append(" procesos\n");
+        sb.append("Cola Finished: ").append(C_finished.size()).append(" procesos\n");
+        sb.append("=== FIN DEBUG ===");
+        return sb.toString();
+    }
+
 
  //Ready --> Suspended_Ready (por falta de memoria)
     public void SuspendReadyProcess(Proceso proceso){
@@ -206,6 +218,7 @@ public class ProcessManager {
     //END process (Running --> Finished)
     public void EndProcess(){
     if (CurrentRunning_Process != null) {
+        memoryManager.liberarMemoria(CurrentRunning_Process);
         System.out.println("[DEBUG] Finalizando proceso: " + CurrentRunning_Process.getName());
         if (CurrentRunning_Process.End()) {
             CurrentRunning_Process.setProcessState(Status.Finished);
@@ -225,7 +238,15 @@ public class ProcessManager {
         CurrentRunning_Process = null;
     }
 }
+ 
+    public void gestionarMemoria() {
+        memoryManager.verificarYGestionarMemoria();
+    }
     
+    // Getter para memoryManager
+    public MemoryManager getMemoryManager() { 
+        return memoryManager; 
+    }
     //Termina el proceso desde cualquier estado
     public void terminarProceso(Proceso proceso) {
         proceso.setProcessState(Status.Finished);

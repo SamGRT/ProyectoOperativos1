@@ -98,7 +98,7 @@
                       </Properties>
                       <Constraints>
                         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                          <AbsoluteConstraints x="0" y="110" width="240" height="60"/>
+                          <AbsoluteConstraints x="70" y="110" width="140" height="80"/>
                         </Constraint>
                       </Constraints>
                     </Component>
@@ -750,7 +750,7 @@
                       </Properties>
                       <Constraints>
                         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                          <AbsoluteConstraints x="60" y="540" width="200" height="20"/>
+                          <AbsoluteConstraints x="60" y="530" width="200" height="20"/>
                         </Constraint>
                       </Constraints>
                     </Component>
@@ -794,18 +794,18 @@
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                           <Font name="Segoe UI Black" size="10" style="1"/>
                         </Property>
-                        <Property name="text" type="java.lang.String" value="COLA SUSPENDIDOS/BLOQUEADO"/>
+                        <Property name="text" type="java.lang.String" value="COLA SUSPENDIDOS/LISTOS"/>
                       </Properties>
                       <Constraints>
                         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                          <AbsoluteConstraints x="60" y="360" width="200" height="20"/>
+                          <AbsoluteConstraints x="820" y="360" width="200" height="20"/>
                         </Constraint>
                       </Constraints>
                     </Component>
                     <Container class="javax.swing.JScrollPane" name="Cola_Finished">
                       <Constraints>
                         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                          <AbsoluteConstraints x="60" y="570" width="930" height="160"/>
+                          <AbsoluteConstraints x="60" y="560" width="930" height="150"/>
                         </Constraint>
                       </Constraints>
 
@@ -823,21 +823,46 @@
                     <Container class="javax.swing.JScrollPane" name="Cola_Blocked">
                       <Constraints>
                         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                          <AbsoluteConstraints x="60" y="200" width="930" height="160"/>
+                          <AbsoluteConstraints x="60" y="200" width="930" height="150"/>
                         </Constraint>
                       </Constraints>
 
                       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
                     </Container>
-                    <Container class="javax.swing.JScrollPane" name="Cola_SuspBlock">
+                    <Container class="javax.swing.JScrollPane" name="Cola_SuspR">
                       <Constraints>
                         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                          <AbsoluteConstraints x="60" y="380" width="930" height="160"/>
+                          <AbsoluteConstraints x="540" y="380" width="440" height="150"/>
                         </Constraint>
                       </Constraints>
 
                       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
                     </Container>
+                    <Container class="javax.swing.JScrollPane" name="Cola_SuspB">
+                      <Constraints>
+                        <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
+                          <AbsoluteConstraints x="60" y="380" width="440" height="150"/>
+                        </Constraint>
+                      </Constraints>
+
+                      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+                    </Container>
+                    <Component class="javax.swing.JLabel" name="jLabel8">
+                      <Properties>
+                        <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                          <Color blue="ff" green="ff" red="ff" type="rgb"/>
+                        </Property>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Segoe UI Black" size="10" style="1"/>
+                        </Property>
+                        <Property name="text" type="java.lang.String" value="COLA SUSPENDIDOS/BLOQUEADO"/>
+                      </Properties>
+                      <Constraints>
+                        <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
+                          <AbsoluteConstraints x="60" y="360" width="200" height="20"/>
+                        </Constraint>
+                      </Constraints>
+                    </Component>
                   </SubComponents>
                 </Container>
               </SubComponents>

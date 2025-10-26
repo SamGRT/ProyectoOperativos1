@@ -1,5 +1,6 @@
 Simulacion\Clock.class
 Planificacion\RoundRobin.class
+Simulacion\MemoryManager.class
 gui\mainWindow$4.class
 Simulacion\ProcessManager.class
 utils\MetricsCalculator$MetricData.class
