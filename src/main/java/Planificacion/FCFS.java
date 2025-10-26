@@ -29,10 +29,9 @@ public class FCFS implements AlgoritmoPlanificacion {
         try {
             semaforoCola.adquirir();
             proceso.setProcessState(Status.Ready);
-            if (processManager != null && processManager.getC_Ready() != null) {
-                processManager.getC_Ready().encolar(proceso);
-                logger.log(String.format("Proceso %s agregado a cola FCFS (vía ProcessManager)", proceso.getName()));
-            }
+
+              
+           
             
             semaforoCola.liberar();
         } catch (InterruptedException e) {

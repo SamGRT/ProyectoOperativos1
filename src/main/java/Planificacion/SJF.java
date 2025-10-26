@@ -23,19 +23,16 @@ public class SJF implements AlgoritmoPlanificacion {
         this.logger = Logger.getInstancia();
     }
     
-    @Override
+   @Override
 public void agregarProceso(Proceso proceso) {
     try {
         semaforoCola.adquirir();
+        
+        // SOLUCIÓN: Solo cambiar el estado, NO encolar nuevamente
+        // El proceso YA está en C_Ready desde ProcessManager.addProcess()
         proceso.setProcessState(Status.Ready);
         
-        // SOLUCIÓN: Solo encolar en la cola del ProcessManager
-        // SJF manejará la selección en obtenerSiguienteProceso()
-        if (processManager != null && processManager.getC_Ready() != null) {
-            processManager.getC_Ready().encolar(proceso);
-        }
-        
-        logger.log(String.format("Proceso %s agregado a cola SJF", proceso.getName()));
+        logger.log(String.format("Proceso %s preparado para SJF", proceso.getName()));
         semaforoCola.liberar();
     } catch (InterruptedException e) {
         Thread.currentThread().interrupt();

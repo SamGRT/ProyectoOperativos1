@@ -67,9 +67,10 @@ public class ProcessManager {
             proceso.setProcessState(Status.Ready);
             if (planificador != null) {
                 planificador.agregarProceso(proceso);  
-            } else {
-                C_Ready.encolar(proceso); 
-            }
+            } 
+             if (!C_Ready.contiene(proceso)) {
+            C_Ready.encolar(proceso);
+        }
             System.out.println("[MEMORY] Proceso " + proceso.getName() + " asignado en memoria");
         } else {
             // Si no hay memoria, suspender inmediatamente

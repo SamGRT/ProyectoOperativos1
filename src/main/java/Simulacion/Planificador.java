@@ -54,7 +54,7 @@ public class Planificador implements Runnable {
                         System.out.println("[DEBUG Planificador] Proceso transferido: " + p.getName());
                     }
                 }
-                processManager.setC_Ready(new Cola());
+                
             }
             
             this.algoritmoActual = nuevoAlgoritmo;
